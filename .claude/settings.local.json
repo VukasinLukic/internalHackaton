@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(for dir in apps/mobile/app apps/mobile/src/components apps/mobile/src/hooks apps/mobile/src/stores apps/mobile/src/services apps/mobile/src/utils apps/mobile/assets/images apps/mobile/assets/fonts)",
+      "Bash(do touch \"$dir/.gitkeep\")",
+      "Bash(done)",
+      "Bash(for dir in apps/server/src/controllers apps/server/src/services apps/server/src/routes apps/server/src/middleware apps/server/src/config apps/server/src/types)",
+      "Bash(npx create-expo-app@latest . --template blank-typescript --yes)",
+      "Bash(npx expo install:*)",
+      "Bash(npm install:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nInitial project setup: ZZZimeri monorepo\n\n- Set up npm workspaces monorepo structure with Turbo\n- Initialize Expo \\(SDK 54\\) React Native app with TypeScript\n- Configure Expo Router, Reanimated, Gesture Handler, Zustand, Tamagui\n- Initialize Node.js/Fastify server with Neo4j, OpenAI, Cloudinary deps\n- Create shared package with Zod schemas, types, and constants\n- Add base TypeScript configurations\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")"
+    ]
+  }
+}
