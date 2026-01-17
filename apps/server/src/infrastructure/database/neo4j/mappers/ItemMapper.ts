@@ -1,4 +1,4 @@
-import { Item, ItemStatus, ItemLocation } from '../../../../core/domain/entities';
+import { Item, ItemStatus } from '../../../../core/domain/entities';
 
 interface Neo4jItemNode {
   id: string;

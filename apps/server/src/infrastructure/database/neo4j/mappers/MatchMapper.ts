@@ -1,4 +1,4 @@
-import { Match, MatchStatus, MatchScore } from '../../../../core/domain/entities';
+import { Match, MatchStatus } from '../../../../core/domain/entities';
 
 interface Neo4jMatchNode {
   id: string;
