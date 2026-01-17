@@ -16,7 +16,8 @@
       "Bash(while read dir)",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: Scaffold domain-agnostic architecture structure\n\nCreate complete folder structure for Visual Matching Platform with 90% code reusability:\n\nArchitecture Layers:\n- config/ - Domain configuration \\(ZZZimeri/Tradey\\)\n- core/ - Domain-agnostic business logic\n  - domain/entities - Generic entities \\(Item, User, Attribute, Match\\)\n  - domain/value-objects - Value objects \\(Location, Price, Score\\)\n  - repositories - Repository interfaces \\(ports\\)\n  - services - Business services \\(matching, vision, recommendation\\)\n  - use-cases - Application use cases\n- infrastructure/ - Framework adapters\n  - database/neo4j - Neo4j repositories & mappers\n  - database/postgres - PostgreSQL \\(future: Tradey credits\\)\n  - external-services - OpenAI, Cloudinary, Clerk\n  - messaging - Socket.io real-time\n- api/ - HTTP/WebSocket layer\n  - http - Controllers, routes, DTOs, serializers, middleware\n  - websocket - Real-time event handlers\n- container/ - Dependency injection\n- shared/ - Utilities and constants\n\nThis structure enables switching between domains \\(ZZZimeri ↔ Tradey\\) \nby changing only the domain configuration file.\n\nCo-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
       "Bash(git push)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
