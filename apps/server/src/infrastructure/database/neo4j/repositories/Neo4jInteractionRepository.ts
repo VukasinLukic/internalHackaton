@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { Interaction, InteractionType } from '../../../../core/domain/entities';
+import { Interaction } from '../../../../core/domain/entities';
 import { IInteractionRepository } from '../../../../core/repositories';
 import { neo4jConnection } from '../Neo4jConnection';
 import { InteractionMapper } from '../mappers';
@@ -86,7 +86,7 @@ export class Neo4jInteractionRepository implements IInteractionRepository {
     };
   }
 
-  async update(id: string, data: Partial<Interaction>): Promise<Interaction> {
+  async update(_id: string, _data: Partial<Interaction>): Promise<Interaction> {
     // Interactions are immutable, throw error
     throw new Error('Interactions cannot be updated');
   }

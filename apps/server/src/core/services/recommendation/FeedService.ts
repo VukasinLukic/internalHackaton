@@ -25,7 +25,7 @@ export class FeedService {
   async generatePersonalizedFeed(
     seekerId: string,
     limit: number = 20,
-    offset: number = 0
+    _offset: number = 0
   ): Promise<FeedItem[]> {
     // 1. Get seeker profile
     const seeker = await this.userRepository.findById(seekerId);
