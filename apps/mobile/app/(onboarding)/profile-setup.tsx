@@ -23,7 +23,8 @@ export default function ProfileSetupScreen() {
     setOnboardingName,
     setOnboardingBio,
     setOnboardingPhotos,
-    addOnboardingPhoto
+    addOnboardingPhoto,
+    updateUser
   } = useAuthStore();
 
   const [name, setName] = useState(onboardingName);
@@ -82,6 +83,12 @@ export default function ProfileSetupScreen() {
       setOnboardingName(name);
       setOnboardingBio(bio);
       setOnboardingPhotos(photos);
+
+      // Update user object with name and images
+      updateUser({
+        name: name,
+        images: photos,
+      });
 
       // Navigate to AI analysis
       router.push('/(onboarding)/photo-analysis');

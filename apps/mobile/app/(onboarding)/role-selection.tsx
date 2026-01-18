@@ -4,9 +4,11 @@ import { useAuthStore } from '../../src/stores/authStore';
 
 export default function RoleSelectionScreen() {
   const setOnboardingRole = useAuthStore((state) => state.setOnboardingRole);
+  const updateUser = useAuthStore((state) => state.updateUser);
 
   const selectRole = (role: 'seeker' | 'provider') => {
     setOnboardingRole(role);
+    updateUser({ role });
     router.push('/(onboarding)/profile-setup');
   };
 

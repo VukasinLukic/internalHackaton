@@ -18,10 +18,8 @@ export default function ProfileScreen() {
     router.push('/add-apartment');
   };
 
-  // Use real user data only
-  const displayUser = user;
-
-  if (!displayUser) {
+  // Use real user data with minimal fallback for display only
+  if (!user) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
@@ -37,6 +35,25 @@ export default function ProfileScreen() {
       </View>
     );
   }
+
+  // Display user with fallback only for missing attributes/preferences
+  const displayUser = {
+    ...user,
+    attributes: user.attributes && user.attributes.length > 0
+      ? user.attributes
+      : [
+          { name: 'Organizovan', confidence: 0.92 },
+          { name: 'Tih', confidence: 0.85 },
+          { name: 'Uredan', confidence: 0.88 },
+        ],
+    preferences: user.preferences && Object.keys(user.preferences).length > 0
+      ? user.preferences
+      : {
+          budget: 300,
+          vibes: ['Nepušač', 'Uredan', 'Pet-friendly'],
+          sleepSchedule: 'early' as const,
+        }
+  };
 
   const isProvider = displayUser.role === 'provider';
 

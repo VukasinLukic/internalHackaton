@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Pressable, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ActivityIndicator, Alert, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../../src/stores/authStore';
@@ -6,7 +6,7 @@ import { api, uploadMultipleToCloudinary } from '../../src/services';
 import type { UserAttribute, UserRole } from '../../src/types';
 
 export default function PhotoAnalysisScreen() {
-  const { onboardingRole, onboardingName, onboardingBio, onboardingPhotos, login, clearOnboarding } = useAuthStore();
+  const { user, onboardingRole, onboardingName, onboardingBio, onboardingPhotos, updateUser, clearOnboarding } = useAuthStore();
 
   const [isAnalyzing, setIsAnalyzing] = useState(true);
   const [traits, setTraits] = useState<UserAttribute[]>([]);
@@ -66,9 +66,11 @@ export default function PhotoAnalysisScreen() {
 
       console.log('[PHOTO-ANALYSIS] ✅ Demo AI analysis complete (hardcoded)');
 
-      // Save to local store (no backend)
-      login(mockUser.id, mockUser);
-      console.log('[PHOTO-ANALYSIS] ✅ User logged in - DEMO MODE ACTIVE');
+      // Update existing user with attributes (don't overwrite email/name from registration)
+      if (user) {
+        updateUser({ attributes: demoTraits });
+      }
+      console.log('[PHOTO-ANALYSIS] ✅ User attributes updated - DEMO MODE ACTIVE');
 
     } catch (error) {
       console.error('[PHOTO-ANALYSIS] Demo error:', error);
@@ -88,12 +90,20 @@ export default function PhotoAnalysisScreen() {
         createdAt: new Date().toISOString(),
       };
 
-      setTraits(fallbackUser.attributes);
+      const fallbackAttributes = [
+        { name: 'Prijatan', confidence: 0.85 },
+        { name: 'Kooperativan', confidence: 0.80 },
+      ];
+
+      setTraits(fallbackAttributes);
       setMockUser(fallbackUser);
       setIsAnalyzing(false);
-      login(fallbackUser.id, fallbackUser);
 
-      console.log('[PHOTO-ANALYSIS] ✅ Fallback demo user created');
+      if (user) {
+        updateUser({ attributes: fallbackAttributes });
+      }
+
+      console.log('[PHOTO-ANALYSIS] ✅ Fallback attributes updated');
     }
   };
 
@@ -119,12 +129,6 @@ export default function PhotoAnalysisScreen() {
 
   return (
     <View style={styles.container}>
-      {!isAnalyzing && (
-        <View style={styles.logoContainer}>
-          <Text style={styles.logoText}>zzimeri</Text>
-        </View>
-      )}
-
       {isAnalyzing ? (
         <View style={styles.analyzingContainer}>
           <View style={styles.loaderWrapper}>
@@ -137,33 +141,49 @@ export default function PhotoAnalysisScreen() {
         </View>
       ) : (
         <View style={styles.resultsContainer}>
+          {/* Logo at top */}
+          <Image
+            source={require('../../assets/veliki logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+
           <Text style={styles.title}>Koji je tvoj vajb?</Text>
 
           <View style={styles.imageCard}>
-            <View style={styles.imagePlaceholder}>
-              {/* Mock room image */}
-              <View style={styles.vibeTagsContainer}>
-                <Pressable style={styles.vibeTag}>
-                  <Text style={styles.vibeTagText}>AI Vibe Check ✨</Text>
-                </Pressable>
-                <Pressable style={styles.vibeTag}>
+            <Image
+              source={require('../../assets/room-mockup.jpg')}
+              style={styles.roomImage}
+              resizeMode="cover"
+            />
+            <View style={styles.vibeTagsContainer}>
+              {/* AI Vibe Check tag at top */}
+              <View style={styles.vibeTag}>
+                <Text style={styles.vibeTagText}>AI Vibe Check ✨</Text>
+              </View>
+
+              {/* Bottom right tags */}
+              <View style={styles.bottomRightTags}>
+                <View style={styles.vibeTag}>
                   <Text style={styles.vibeTagText}>#Modern</Text>
-                </Pressable>
-                <Pressable style={styles.vibeTag}>
+                </View>
+              </View>
+
+              {/* Bottom left tags */}
+              <View style={styles.bottomLeftTags}>
+                <View style={styles.vibeTag}>
                   <Text style={styles.vibeTagText}>#Bright</Text>
-                </Pressable>
-                <Pressable style={styles.vibeTag}>
+                </View>
+                <View style={[styles.vibeTag, { marginTop: 140 }]}>
                   <Text style={styles.vibeTagText}>#Plants</Text>
-                </Pressable>
+                </View>
               </View>
             </View>
           </View>
 
-          {visibleTraits >= traits.length && (
-            <Pressable style={styles.button} onPress={handleContinue}>
-              <Text style={styles.buttonText}>Potvrdi vibe</Text>
-            </Pressable>
-          )}
+          <Pressable style={styles.button} onPress={handleContinue}>
+            <Text style={styles.buttonText}>Potvrdi vibe</Text>
+          </Pressable>
         </View>
       )}
     </View>
@@ -176,18 +196,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     paddingHorizontal: 24,
     justifyContent: 'center',
-  },
-  logoContainer: {
-    position: 'absolute',
-    top: 60,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-  },
-  logoText: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
   },
   analyzingContainer: {
     alignItems: 'center',
@@ -210,8 +218,13 @@ const styles = StyleSheet.create({
   },
   resultsContainer: {
     flex: 1,
-    paddingTop: 120,
+    paddingTop: 60,
     alignItems: 'center',
+  },
+  logo: {
+    width: 200,
+    height: 80,
+    marginBottom: 20,
   },
   title: {
     fontSize: 32,
@@ -222,19 +235,18 @@ const styles = StyleSheet.create({
   },
   imageCard: {
     width: '100%',
-    aspectRatio: 0.7,
+    aspectRatio: 0.65,
     marginBottom: 40,
-    borderRadius: 20,
+    borderRadius: 30,
     overflow: 'hidden',
     borderWidth: 3,
     borderColor: '#1a1a1a',
-  },
-  imagePlaceholder: {
-    flex: 1,
-    backgroundColor: '#E5E5E5',
-    justifyContent: 'center',
-    alignItems: 'center',
     position: 'relative',
+  },
+  roomImage: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
   },
   vibeTagsContainer: {
     position: 'absolute',
@@ -242,40 +254,43 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    padding: 20,
+    padding: 24,
   },
   vibeTag: {
     backgroundColor: '#E991D9',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 25,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 30,
     alignSelf: 'flex-start',
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 2,
+    borderColor: '#1a1a1a',
   },
   vibeTagText: {
     color: '#1a1a1a',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
+  },
+  bottomRightTags: {
+    position: 'absolute',
+    right: 24,
+    top: '45%',
+  },
+  bottomLeftTags: {
+    position: 'absolute',
+    left: 24,
+    bottom: 24,
   },
   button: {
     backgroundColor: '#E991D9',
-    paddingVertical: 18,
-    paddingHorizontal: 60,
-    borderRadius: 30,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    paddingVertical: 20,
+    paddingHorizontal: 80,
+    borderRadius: 35,
+    width: '100%',
+    alignItems: 'center',
   },
   buttonText: {
     color: '#1a1a1a',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '600',
   },
 });

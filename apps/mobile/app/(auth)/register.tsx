@@ -7,14 +7,30 @@ export default function RegisterScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { setOnboardingName } = useAuthStore();
+  const { setOnboardingName, login } = useAuthStore();
 
   const handleRegister = () => {
     console.log('[REGISTER] 🎭 DEMO MODE - No backend needed!');
 
+    // Validate fields
+    if (!name.trim()) {
+      alert('Unesi ime i prezime');
+      return;
+    }
+
+    if (!email.trim()) {
+      alert('Unesi email adresu');
+      return;
+    }
+
     // Validate email contains @gmail.com
     if (!email.toLowerCase().includes('@gmail.com')) {
       alert('Email mora biti @gmail.com adresa');
+      return;
+    }
+
+    if (!password.trim() || password.length < 6) {
+      alert('Lozinka mora imati minimum 6 karaktera');
       return;
     }
 
@@ -32,8 +48,8 @@ export default function RegisterScreen() {
       preferences: {},
     };
 
-    // Store in auth state
-    useAuthStore.getState().updateUser(demoUser);
+    // Store in auth state using login
+    login('demo-token', demoUser);
 
     // Hardcoded demo - go straight to onboarding
     router.replace('/(onboarding)/role-selection');
