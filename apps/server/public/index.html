@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZZZimeri Intelligence - Vision Test</title>
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 30%, rgba(10, 132, 255, 0.08) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 70%, rgba(255, 55, 95, 0.06) 0%, transparent 50%),
+                        radial-gradient(circle at 50% 50%, rgba(30, 30, 30, 0.4) 0%, transparent 100%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 40px;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding: 24px 32px;
+            background: rgba(30, 30, 30, 0.6);
+            backdrop-filter: blur(40px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: slideDown 0.6s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.7) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 24px;
+            background: rgba(48, 209, 88, 0.1);
+            border: 1px solid rgba(48, 209, 88, 0.3);
+            border-radius: 100px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #30D158;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #30D158;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+            box-shadow: 0 0 20px rgba(48, 209, 88, 0.6);
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.6;
+                transform: scale(1.2);
+            }
+        }
+
+        /* Grid Layout */
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 30px;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .glass-card {
+            background: rgba(30, 30, 30, 0.6);
+            backdrop-filter: blur(40px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 32px;
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Left Column - Input Panel */
+        .input-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            height: fit-content;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .input-label {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 16px 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
+            color: #fff;
+            font-size: 16px;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            border-color: #0A84FF;
+            box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.1);
+        }
+
+        .image-preview {
+            width: 100%;
+            height: 400px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .image-preview.has-image {
+            border-style: solid;
+            border-color: rgba(10, 132, 255, 0.3);
+        }
+
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .image-preview img.loaded {
+            opacity: 1;
+        }
+
+        .preview-placeholder {
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .analyze-button {
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(135deg, #0A84FF 0%, #0066CC 100%);
+            border: none;
+            border-radius: 16px;
+            color: #fff;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(10, 132, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .analyze-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .analyze-button:hover::before {
+            left: 100%;
+        }
+
+        .analyze-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(10, 132, 255, 0.4);
+        }
+
+        .analyze-button:active {
+            transform: translateY(0);
+        }
+
+        .analyze-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .button-text {
+            position: relative;
+            z-index: 1;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Right Column */
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* Logs Panel */
+        .logs-panel {
+            height: 350px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(180deg, #0A84FF, #FF375F);
+            border-radius: 2px;
+        }
+
+        .logs-container {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 16px;
+            padding: 20px;
+            overflow-y: auto;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.8;
+        }
+
+        .logs-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .logs-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .logs-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            display: flex;
+            gap: 12px;
+            animation: slideInLeft 0.4s ease-out;
+            opacity: 0;
+            animation-fill-mode: forwards;
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .log-timestamp {
+            color: rgba(255, 255, 255, 0.4);
+            min-width: 80px;
+        }
+
+        .log-message {
+            flex: 1;
+        }
+
+        .log-info { color: #0A84FF; }
+        .log-ai { color: #FF375F; }
+        .log-success { color: #30D158; }
+        .log-warning { color: #FFD60A; }
+
+        /* Graph Panel */
+        .graph-panel {
+            height: 500px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .graph-container {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 16px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #network {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            .graph-panel {
+                height: 600px;
+            }
+        }
+
+        /* Custom scrollbar for body */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #000;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">ZZZimeri Intelligence</div>
+            <div class="status-badge">
+                <div class="status-dot"></div>
+                <span>Systems Operational</span>
+            </div>
+        </div>
+
+        <!-- Main Grid -->
+        <div class="grid">
+            <!-- Left Column - Input Panel -->
+            <div class="glass-card input-panel">
+                <div class="input-group">
+                    <label class="input-label">Image Source</label>
+                    <input
+                        type="text"
+                        id="imageUrl"
+                        class="input-field"
+                        placeholder="Enter image URL..."
+                        value="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"
+                    >
+                </div>
+
+                <div class="image-preview" id="imagePreview">
+                    <span class="preview-placeholder">Image preview will appear here</span>
+                    <img id="previewImage" alt="Preview" />
+                </div>
+
+                <button class="analyze-button" id="analyzeBtn">
+                    <span class="button-text">Analyze Vibe</span>
+                </button>
+            </div>
+
+            <!-- Right Column -->
+            <div class="right-column">
+                <!-- Logs Panel -->
+                <div class="glass-card logs-panel">
+                    <div class="panel-title">System Logs</div>
+                    <div class="logs-container" id="logsContainer">
+                        <div class="log-entry" style="animation-delay: 0s;">
+                            <span class="log-timestamp">[00:00:00]</span>
+                            <span class="log-message log-success">System initialized</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Graph Panel -->
+                <div class="glass-card graph-panel">
+                    <div class="panel-title">Neural Network Map</div>
+                    <div class="graph-container">
+                        <div id="network"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Graph initialization
+        let nodes = new vis.DataSet([]);
+        let edges = new vis.DataSet([]);
+
+        const container = document.getElementById('network');
+        const data = { nodes, edges };
+        const options = {
+            nodes: {
+                shape: 'dot',
+                size: 20,
+                font: {
+                    size: 14,
+                    color: '#ffffff',
+                    face: '-apple-system, BlinkMacSystemFont, SF Pro Display'
+                },
+                borderWidth: 2,
+                shadow: {
+                    enabled: true,
+                    color: 'rgba(10, 132, 255, 0.5)',
+                    size: 10,
+                    x: 0,
+                    y: 0
+                }
+            },
+            edges: {
+                width: 2,
+                shadow: {
+                    enabled: true,
+                    color: 'rgba(48, 209, 88, 0.3)',
+                    size: 5
+                },
+                smooth: {
+                    type: 'continuous',
+                    roundness: 0.5
+                }
+            },
+            physics: {
+                barnesHut: {
+                    gravitationalConstant: -8000,
+                    centralGravity: 0.3,
+                    springLength: 200,
+                    springConstant: 0.04
+                },
+                stabilization: {
+                    iterations: 100
+                }
+            },
+            interaction: {
+                hover: true,
+                tooltipDelay: 200
+            }
+        };
+
+        const network = new vis.Network(container, data, options);
+
+        // Logging utility
+        let logCounter = 0;
+        function addLog(message, type = 'info') {
+            const logsContainer = document.getElementById('logsContainer');
+            const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false });
+
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.style.animationDelay = '0s';
+
+            logEntry.innerHTML = `
+                <span class="log-timestamp">[${timestamp}]</span>
+                <span class="log-message log-${type}">${message}</span>
+            `;
+
+            logsContainer.appendChild(logEntry);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+            logCounter++;
+        }
+
+        // Image preview handler
+        const imageUrlInput = document.getElementById('imageUrl');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImage = document.getElementById('previewImage');
+        const placeholder = imagePreview.querySelector('.preview-placeholder');
+
+        imageUrlInput.addEventListener('input', (e) => {
+            const url = e.target.value.trim();
+            if (url) {
+                previewImage.src = url;
+                previewImage.onload = () => {
+                    previewImage.classList.add('loaded');
+                    placeholder.style.display = 'none';
+                    imagePreview.classList.add('has-image');
+                };
+                previewImage.onerror = () => {
+                    previewImage.classList.remove('loaded');
+                    placeholder.style.display = 'block';
+                    imagePreview.classList.remove('has-image');
+                };
+            } else {
+                previewImage.classList.remove('loaded');
+                placeholder.style.display = 'block';
+                imagePreview.classList.remove('has-image');
+            }
+        });
+
+        // Trigger initial image load
+        if (imageUrlInput.value) {
+            imageUrlInput.dispatchEvent(new Event('input'));
+        }
+
+        // Analysis simulation
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        let isAnalyzing = false;
+
+        analyzeBtn.addEventListener('click', async () => {
+            if (isAnalyzing) return;
+
+            const imageUrl = imageUrlInput.value.trim();
+            if (!imageUrl) {
+                addLog('⚠ Please enter an image URL', 'warning');
+                return;
+            }
+
+            isAnalyzing = true;
+            analyzeBtn.disabled = true;
+            analyzeBtn.innerHTML = '<span class="spinner"></span><span class="button-text">Processing...</span>';
+
+            // Clear previous graph
+            nodes.clear();
+            edges.clear();
+
+            await sleep(500);
+
+            // Step 1: Add user node
+            addLog('🔵 Initializing analysis session...', 'info');
+            await sleep(800);
+
+            nodes.add({
+                id: 'user',
+                label: 'Lazar\n(Seeker)',
+                color: {
+                    background: '#0A84FF',
+                    border: '#0066CC',
+                    highlight: { background: '#0A84FF', border: '#ffffff' }
+                },
+                size: 30
+            });
+
+            addLog('🔗 Connecting to Gemini Vision API...', 'info');
+            await sleep(1200);
+
+            // Step 2: Extract vectors
+            addLog('�� Extracting semantic vectors from image...', 'ai');
+            await sleep(1500);
+
+            addLog('📊 Processing multimodal embeddings...', 'ai');
+            await sleep(1000);
+
+            // Step 3: Add apartment node
+            nodes.add({
+                id: 'apartment',
+                label: 'Modern Apartment',
+                color: {
+                    background: 'rgba(255, 255, 255, 0.9)',
+                    border: '#cccccc',
+                    highlight: { background: '#ffffff', border: '#0A84FF' }
+                },
+                size: 35,
+                image: imageUrl,
+                shape: 'circularImage'
+            });
+
+            addLog('🏠 Item detected: Modern Apartment', 'success');
+            await sleep(800);
+
+            // Step 4: Add tag nodes
+            const tags = [
+                { id: 'tag1', label: 'Minimalist', pref: true },
+                { id: 'tag2', label: 'Urban', pref: true },
+                { id: 'tag3', label: 'Bright', pref: true },
+                { id: 'tag4', label: 'Spacious', pref: false },
+                { id: 'tag5', label: 'Modern', pref: true }
+            ];
+
+            addLog('🏷 Analyzing visual attributes...', 'ai');
+            await sleep(600);
+
+            for (const tag of tags) {
+                nodes.add({
+                    id: tag.id,
+                    label: tag.label,
+                    color: {
+                        background: '#FF375F',
+                        border: '#CC1744',
+                        highlight: { background: '#FF375F', border: '#ffffff' }
+                    },
+                    size: 15
+                });
+
+                edges.add({
+                    from: 'apartment',
+                    to: tag.id,
+                    color: { color: 'rgba(255, 55, 95, 0.4)' },
+                    width: 1
+                });
+
+                await sleep(300);
+            }
+
+            addLog('✨ Tags extracted: Minimalist, Urban, Bright, Spacious, Modern', 'success');
+            await sleep(1000);
+
+            // Step 5: Match with user preferences
+            addLog('🔍 Matching with user preferences...', 'info');
+            await sleep(1000);
+
+            const matchingTags = tags.filter(t => t.pref);
+
+            for (const tag of matchingTags) {
+                edges.add({
+                    from: 'user',
+                    to: tag.id,
+                    color: { color: '#30D158', opacity: 0.8 },
+                    width: 3,
+                    dashes: false
+                });
+                await sleep(400);
+            }
+
+            await sleep(800);
+
+            // Step 6: Calculate match score
+            const matchScore = Math.round((matchingTags.length / tags.length) * 100);
+            addLog(`💚 MATCH FOUND: ${matchScore}% compatibility`, 'success');
+            await sleep(500);
+
+            addLog(`✅ Analysis complete - ${matchingTags.length}/${tags.length} preferences matched`, 'success');
+
+            // Re-enable button
+            analyzeBtn.disabled = false;
+            analyzeBtn.innerHTML = '<span class="button-text">Analyze Again</span>';
+            isAnalyzing = false;
+        });
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Initial system message
+        setTimeout(() => {
+            addLog('🚀 Vision AI engine ready', 'success');
+        }, 1000);
+    </script>
+</body>
+</html>

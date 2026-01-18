@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, Pressable, ActivityIndicator, Alert } from 'rea
 import { router } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../../src/stores/authStore';
-import { api } from '../../src/services/api';
+import { api, uploadMultipleToCloudinary } from '../../src/services';
 import type { UserAttribute } from '../../src/types';
 
 export default function PhotoAnalysisScreen() {
@@ -19,21 +19,19 @@ export default function PhotoAnalysisScreen() {
 
   const analyzeProfile = async () => {
     try {
-      // Upload images first
-      const uploadedImageUrls: string[] = [];
+      // Upload images to Cloudinary first
+      const uploadResult = await uploadMultipleToCloudinary(onboardingPhotos);
 
-      for (const photoUri of onboardingPhotos) {
-        const uploadResult = await api.uploadImage(photoUri);
-        if (uploadResult.success && uploadResult.data) {
-          uploadedImageUrls.push(uploadResult.data.url);
-        }
-      }
-
-      if (uploadedImageUrls.length === 0) {
-        Alert.alert('Greška', 'Nije moguće uploadovati slike');
+      if (!uploadResult.success || uploadResult.urls.length === 0) {
+        Alert.alert(
+          'Greška',
+          uploadResult.errors[0] || 'Nije moguće uploadovati slike'
+        );
         router.back();
         return;
       }
+
+      const uploadedImageUrls = uploadResult.urls;
 
       // Create user
       const createUserResult = await api.createUser({
@@ -50,28 +48,34 @@ export default function PhotoAnalysisScreen() {
         return;
       }
 
-      const createdUser = createUserResult.data.user;
+      // Backend returns { success: true, data: { id, name, email, ... } }
+      const createdUser = createUserResult.data;
       setUserId(createdUser.id);
 
-      // Analyze profile
-      const analysisResult = await api.analyzeProfile(createdUser.id);
+      // Analyze profile with uploaded images
+      const analysisResult = await api.analyzeProfile(createdUser.id, uploadedImageUrls, onboardingBio);
 
       setIsAnalyzing(false);
 
       if (analysisResult.success && analysisResult.data) {
-        setTraits(analysisResult.data.attributes);
+        const attributes = analysisResult.data.attributes || analysisResult.data;
+        setTraits(attributes);
+
+        // Update user object with analyzed attributes
+        createdUser.attributes = attributes;
       } else {
         // Use fallback mock data if analysis fails
-        setTraits([
+        const fallbackTraits = [
           { name: 'Organizovan', confidence: 0.85 },
           { name: 'Tih', confidence: 0.78 },
           { name: 'Minimalist', confidence: 0.82 },
-        ]);
+        ];
+        setTraits(fallbackTraits);
+        createdUser.attributes = fallbackTraits;
       }
 
       // Save user to auth store
-      // TODO: Get real token from backend
-      login('temp-token', createdUser);
+      login(createdUser.id, createdUser);
 
     } catch (error) {
       console.error('Profile analysis error:', error);

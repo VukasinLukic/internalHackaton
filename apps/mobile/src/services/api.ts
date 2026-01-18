@@ -15,9 +15,15 @@ import type {
 // API Configuration
 const API_BASE = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
 
-// Helper function to get auth token
-const getToken = (): string | null => {
-  return useAuthStore.getState().token;
+// Helper function to get user ID and role for backend auth
+const getAuthHeaders = (): HeadersInit => {
+  const { user } = useAuthStore.getState();
+  if (!user) return {};
+
+  return {
+    'X-User-Id': user.id,
+    'X-User-Role': user.role,
+  };
 };
 
 // Generic request function with auth
@@ -25,11 +31,11 @@ async function request<T>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
-  const token = getToken();
+  const authHeaders = getAuthHeaders();
 
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` }),
+    ...authHeaders,
     ...options.headers,
   };
 
@@ -102,49 +108,32 @@ export const api = {
     role: 'seeker' | 'provider';
     bio?: string;
     images: string[];
-  }) => POST<{ user: User }>('/users', data),
+  }) => POST<User>('/users', data),
 
   getUser: (userId: string) => GET<{ user: User }>(`/users/${userId}`),
 
   updateUser: (userId: string, data: Partial<User>) =>
     PATCH<{ user: User }>(`/users/${userId}`, data),
 
-  analyzeProfile: (userId: string) =>
-    POST<{ attributes: UserAttribute[] }>(`/users/${userId}/analyze`),
+  analyzeProfile: (userId: string, images?: string[], bio?: string) =>
+    POST<{ attributes: UserAttribute[] }>(`/users/${userId}/analyze`, {
+      images,
+      bio,
+    }),
 
-  updatePreferences: (userId: string, preferences: UserPreferences) =>
-    PATCH<{ user: User }>(`/users/${userId}/preferences`, preferences),
+  updatePreferences: (userId: string, preferences: any) =>
+    PATCH<User>(`/users/${userId}/preferences`, preferences),
 
+  // Note: Image upload is handled client-side via Cloudinary SDK
+  // This is a placeholder for direct Cloudinary upload from mobile
   uploadImage: async (imageUri: string): Promise<ApiResponse<{ url: string }>> => {
-    const token = getToken();
-
-    const formData = new FormData();
-    const filename = imageUri.split('/').pop() || 'image.jpg';
-    const match = /\.(\w+)$/.exec(filename);
-    const type = match ? `image/${match[1]}` : 'image/jpeg';
-
-    formData.append('image', {
-      uri: imageUri,
-      name: filename,
-      type,
-    } as unknown as Blob);
-
     try {
-      const response = await fetch(`${API_BASE}/upload`, {
-        method: 'POST',
-        headers: {
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-        body: formData,
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        return { data: null as any, success: false, error: data.message };
-      }
-
-      return { data, success: true };
+      // For now, we'll return the local URI as we'll implement Cloudinary SDK separately
+      // TODO: Implement Cloudinary direct upload from mobile
+      return {
+        data: { url: imageUri },
+        success: true,
+      };
     } catch (error) {
       return {
         data: null as any,
@@ -208,6 +197,9 @@ export const api = {
 
   sendMessage: (matchId: string, content: string) =>
     POST<{ message: Message }>('/messages', { matchId, content }),
+
+  markMessageAsRead: (messageId: string) =>
+    PATCH<{ success: boolean }>(`/messages/${messageId}/read`, {}),
 };
 
 export default api;

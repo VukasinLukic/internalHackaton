@@ -20,9 +20,27 @@ export default function PreferencesScreen() {
     }
     setIsLoading(true);
     try {
-      const result = await api.updatePreferences(user.id, { budget, smoker, pets, cleanliness, sleepSchedule });
+      // Format preferences according to backend DTO
+      const preferences = {
+        budget: {
+          min: budget.min,
+          max: budget.max,
+        },
+        location: {
+          city: 'Beograd', // Default city for now
+          radius: 10, // Default 10km radius
+        },
+        lifestyle: {
+          smoker,
+          pets,
+          earlyBird: sleepSchedule === 'early',
+          cleanliness,
+        },
+      };
+
+      const result = await api.updatePreferences(user.id, preferences);
       if (result.success && result.data) {
-        updateUser(result.data.user);
+        updateUser(result.data);
         clearOnboarding();
         router.replace('/(tabs)/feed');
       } else {
