@@ -1,79 +1,97 @@
-import { View, Text, StyleSheet, FlatList, Pressable } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
-
-const MOCK_CONVERSATIONS = [
-  {
-    id: 'm1',
-    otherUser: {
-      name: 'Marko P.',
-    },
-    apartment: {
-      location: 'Vračar',
-      price: 350,
-    },
-    lastMessage: {
-      text: 'Super! Možemo da se nađemo sutra?',
-      timestamp: '14:30',
-      isRead: false,
-    },
-  },
-  {
-    id: 'm2',
-    otherUser: {
-      name: 'Ana M.',
-    },
-    apartment: {
-      location: 'Dorćol',
-      price: 400,
-    },
-    lastMessage: {
-      text: 'Stan je dostupan od sledećeg meseca.',
-      timestamp: 'Juče',
-      isRead: true,
-    },
-  },
-];
+import { useEffect } from 'react';
+import { useMatchStore } from '../../src/stores/matchStore';
+import { useChatStore } from '../../src/stores/chatStore';
+import type { Match } from '../../src/types';
 
 export default function MessagesScreen() {
+  const { matches, acceptedMatches, isLoading, fetchMatches } = useMatchStore();
+  const { conversations } = useChatStore();
+
+  useEffect(() => {
+    fetchMatches();
+  }, []);
+
+  // Get matches that have accepted status (can chat)
+  const chatableMatches = matches.filter((m) => m.status === 'accepted');
+
   const handleConversationPress = (matchId: string) => {
     router.push(`/chat/${matchId}`);
   };
 
-  const renderConversation = ({ item }: { item: typeof MOCK_CONVERSATIONS[0] }) => (
-    <Pressable
-      style={styles.conversationCard}
-      onPress={() => handleConversationPress(item.id)}
-    >
-      <View style={styles.avatar}>
-        <Text style={styles.avatarText}>
-          {item.otherUser.name.charAt(0)}
-        </Text>
-      </View>
+  const getLastMessage = (matchId: string) => {
+    const msgs = conversations[matchId];
+    if (msgs && msgs.length > 0) {
+      return msgs[msgs.length - 1];
+    }
+    return null;
+  };
 
-      <View style={styles.conversationContent}>
-        <View style={styles.conversationHeader}>
-          <Text style={styles.userName}>{item.otherUser.name}</Text>
-          <Text style={styles.timestamp}>{item.lastMessage.timestamp}</Text>
+  const renderConversation = ({ item }: { item: Match }) => {
+    const lastMessage = getLastMessage(item.id);
+    const otherUserName = item.otherUser?.name || 'Korisnik';
+    const itemLocation = item.item?.location?.city || '';
+    const itemPrice = item.item?.price || 0;
+
+    return (
+      <Pressable
+        style={styles.conversationCard}
+        onPress={() => handleConversationPress(item.id)}
+      >
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>
+            {otherUserName.charAt(0).toUpperCase()}
+          </Text>
         </View>
 
-        <Text style={styles.apartmentInfo}>
-          🏠 {item.apartment.location} • {item.apartment.price}€
-        </Text>
+        <View style={styles.conversationContent}>
+          <View style={styles.conversationHeader}>
+            <Text style={styles.userName}>{otherUserName}</Text>
+            {lastMessage && (
+              <Text style={styles.timestamp}>
+                {new Date(lastMessage.createdAt).toLocaleTimeString('sr-RS', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </Text>
+            )}
+          </View>
 
-        <Text
-          style={[
-            styles.lastMessage,
-            !item.lastMessage.isRead && styles.lastMessageUnread,
-          ]}
-          numberOfLines={1}
-        >
-          {item.lastMessage.text}
-        </Text>
+          {itemLocation && itemPrice > 0 && (
+            <Text style={styles.apartmentInfo}>
+              🏠 {itemLocation} • {itemPrice}€
+            </Text>
+          )}
+
+          <Text
+            style={[
+              styles.lastMessage,
+              lastMessage && !lastMessage.read && styles.lastMessageUnread,
+            ]}
+            numberOfLines={1}
+          >
+            {lastMessage ? lastMessage.content : 'Započni razgovor...'}
+          </Text>
+        </View>
+
+        {lastMessage && !lastMessage.read && <View style={styles.unreadDot} />}
+      </Pressable>
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Poruke</Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#FF6B6B" />
+        </View>
       </View>
-
-      {!item.lastMessage.isRead && <View style={styles.unreadDot} />}
-    </Pressable>
-  );
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -82,18 +100,24 @@ export default function MessagesScreen() {
       </View>
 
       <FlatList
-        data={MOCK_CONVERSATIONS}
+        data={chatableMatches}
         renderItem={renderConversation}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
+        contentContainerStyle={[
+          styles.listContent,
+          chatableMatches.length === 0 && styles.listContentEmpty,
+        ]}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyEmoji}>💬</Text>
             <Text style={styles.emptyTitle}>Nema poruka</Text>
             <Text style={styles.emptySubtitle}>
-              Kada dobiješ match, možeš da počneš razgovor
+              Kada dobiješ match i prihvatiš ga, možeš da počneš razgovor
             </Text>
+            <Pressable style={styles.refreshButton} onPress={fetchMatches}>
+              <Text style={styles.refreshButtonText}>Osveži</Text>
+            </Pressable>
           </View>
         }
       />
@@ -118,8 +142,16 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#1a1a1a',
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   listContent: {
     flexGrow: 1,
+  },
+  listContentEmpty: {
+    flex: 1,
   },
   conversationCard: {
     flexDirection: 'row',
@@ -184,7 +216,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 100,
+    paddingHorizontal: 40,
   },
   emptyEmoji: {
     fontSize: 64,
@@ -200,6 +232,17 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 8,
     textAlign: 'center',
-    paddingHorizontal: 40,
+  },
+  refreshButton: {
+    backgroundColor: '#FF6B6B',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginTop: 20,
+  },
+  refreshButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

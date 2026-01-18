@@ -4,11 +4,12 @@ import { router } from 'expo-router';
 import { SwipeCard } from '../../src/components/SwipeCard';
 import { MatchModal } from '../../src/components/MatchModal';
 import { useFeedStore } from '../../src/stores/feedStore';
+import { useAuthStore } from '../../src/stores/authStore';
 import type { FeedItem, SwipeAction } from '../../src/types';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-// Mock data - will be replaced with API/store data
+// Mock data - only used as fallback if API fails
 const MOCK_FEED_ITEMS: FeedItem[] = [
   {
     item: {
@@ -127,11 +128,15 @@ const MOCK_FEED_ITEMS: FeedItem[] = [
 ];
 
 export default function FeedScreen() {
-  const { feedItems, currentIndex, isLoading, fetchFeed, swipe, nextItem, showMatchModal, currentMatch, hideMatchModal } = useFeedStore();
+  const { feedItems, currentIndex, isLoading, error, fetchFeed, swipe, nextItem, showMatchModal, currentMatch, hideMatchModal } = useFeedStore();
+  const { user } = useAuthStore();
 
   useEffect(() => {
-    fetchFeed();
-  }, []);
+    // Only fetch feed if user is logged in
+    if (user) {
+      fetchFeed();
+    }
+  }, [user]);
 
   const handleSwipe = async (action: SwipeAction) => {
     if (!feedItems[currentIndex]) return;
@@ -162,6 +167,25 @@ export default function FeedScreen() {
     handleSwipe(action);
   };
 
+  // Not logged in state
+  if (!user) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>ZZZimeri</Text>
+        </View>
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyEmoji}>👋</Text>
+          <Text style={styles.emptyTitle}>Dobrodošli!</Text>
+          <Text style={styles.emptySubtitle}>Napravite profil da biste videli stanove</Text>
+          <Pressable style={styles.refreshButton} onPress={() => router.push('/(onboarding)/role-selection')}>
+            <Text style={styles.refreshButtonText}>Kreiraj profil</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
+
   // Loading state
   if (isLoading && feedItems.length === 0) {
     return (
@@ -177,7 +201,26 @@ export default function FeedScreen() {
     );
   }
 
-  // Empty state
+  // Error state
+  if (error && feedItems.length === 0) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>ZZZimeri</Text>
+        </View>
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyEmoji}>⚠️</Text>
+          <Text style={styles.emptyTitle}>Greška</Text>
+          <Text style={styles.emptySubtitle}>{error}</Text>
+          <Pressable style={styles.refreshButton} onPress={() => fetchFeed()}>
+            <Text style={styles.refreshButtonText}>Pokušaj ponovo</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  }
+
+  // Empty state - no apartments in database
   if (!currentItem) {
     return (
       <View style={styles.container}>
@@ -186,9 +229,12 @@ export default function FeedScreen() {
         </View>
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyEmoji}>🏠</Text>
-          <Text style={styles.emptyTitle}>Nema više stanova</Text>
-          <Text style={styles.emptySubtitle}>Vrati se kasnije za nove opcije</Text>
-          <Pressable style={styles.refreshButton} onPress={fetchFeed}>
+          <Text style={styles.emptyTitle}>Nema stanova</Text>
+          <Text style={styles.emptySubtitle}>
+            Trenutno nema dostupnih stanova u bazi.{'\n'}
+            Probaj ponovo kasnije ili dodaj svoj stan!
+          </Text>
+          <Pressable style={styles.refreshButton} onPress={() => fetchFeed()}>
             <Text style={styles.refreshButtonText}>Osveži feed</Text>
           </Pressable>
         </View>

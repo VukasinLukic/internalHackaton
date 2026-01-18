@@ -4,7 +4,10 @@
  */
 
 const CLOUDINARY_CLOUD_NAME = 'dzxhhdsc5';
-const CLOUDINARY_UPLOAD_PRESET = 'zzzimeri_unsigned'; // You'll need to create this in Cloudinary dashboard
+// IMPORTANT: This preset must exist in Cloudinary dashboard with "Unsigned" signing mode
+// Go to: Settings -> Upload -> Upload presets -> Add upload preset
+// Name: zzzimeri_unsigned, Signing Mode: Unsigned
+const CLOUDINARY_UPLOAD_PRESET = 'zzzimeri_unsigned';
 
 export interface CloudinaryUploadResult {
   success: boolean;
