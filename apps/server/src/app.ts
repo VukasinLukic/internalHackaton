@@ -41,14 +41,24 @@ app.register(registerRoutes);
 // Startup
 const start = async () => {
   try {
+    console.log('🔄 Starting server...');
+    console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`📍 Domain: ${domainConfig.type}`);
+
     // Connect to Neo4j
+    console.log('🔌 Connecting to Neo4j...');
     await neo4jConnection.connect();
+    console.log('✅ Neo4j connected');
 
     const port = Number(process.env.PORT) || 3000;
+    console.log(`🚀 Starting Fastify on port ${port}...`);
     await app.listen({ port, host: '0.0.0.0' });
+    console.log('✅ Fastify listening');
 
     // Initialize Socket.io with HTTP server
+    console.log('🔌 Initializing Socket.io...');
     socketManager.initialize(app.server);
+    console.log('✅ Socket.io initialized');
 
     console.log('');
     console.log('🚀 ZZZimeri API Server');
@@ -56,11 +66,13 @@ const start = async () => {
     console.log(`📍 Domain: ${domainConfig.type}`);
     console.log(`🌐 Server: http://localhost:${port}`);
     console.log(`📚 API:    http://localhost:${port}/api/v1`);
-    console.log(`💚 Health: http://localhost:${port}/health`);
+    console.log(`💚 Health: http://localhost:${port}/api/v1/health`);
     console.log(`🔌 Socket: http://localhost:${port}/socket.io`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('');
   } catch (err) {
+    console.error('❌ Fatal error during startup:');
+    console.error(err);
     app.log.error(err);
     process.exit(1);
   }

@@ -7,11 +7,17 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies (use npm install since we don't have package-lock in subdirectory)
-RUN npm install --omit=dev
+# Install ALL dependencies (including devDependencies for build)
+RUN npm install
 
 # Copy source code
 COPY . .
+
+# Build TypeScript
+RUN npm run build
+
+# Remove dev dependencies after build
+RUN npm prune --omit=dev
 
 # Expose port
 EXPOSE 3000
