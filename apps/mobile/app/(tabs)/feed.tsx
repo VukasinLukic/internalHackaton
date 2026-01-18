@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Pressable, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Dimensions, ActivityIndicator, Image } from 'react-native';
 import { useState, useEffect } from 'react';
 import { router } from 'expo-router';
 import { SwipeCard } from '../../src/components/SwipeCard';
@@ -32,7 +32,7 @@ const MOCK_FEED_ITEMS: FeedItem[] = [
     provider: {
       id: 'u1',
       name: 'Marko P.',
-      images: [],
+      images: ['https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400'],
       attributes: [
         { name: 'Organizovan', confidence: 0.92 },
         { name: 'Tih', confidence: 0.85 },
@@ -43,7 +43,7 @@ const MOCK_FEED_ITEMS: FeedItem[] = [
       roommateCompatibility: 82,
       total: 85,
       reasons: [
-        'Matching vibes: Modern, Minimalist',
+        'Oboje cenite mirno jutro i dobru kafu!',
         'U okviru tvog budžeta',
         'Kompatibilan cimer: Tih, Organizovan',
       ],
@@ -70,7 +70,7 @@ const MOCK_FEED_ITEMS: FeedItem[] = [
     provider: {
       id: 'u2',
       name: 'Ana M.',
-      images: [],
+      images: ['https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400'],
       attributes: [
         { name: 'Druželjubiv', confidence: 0.88 },
         { name: 'Pet-lover', confidence: 0.92 },
@@ -108,7 +108,7 @@ const MOCK_FEED_ITEMS: FeedItem[] = [
     provider: {
       id: 'u3',
       name: 'Nikola S.',
-      images: [],
+      images: ['https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400'],
       attributes: [
         { name: 'Introvert', confidence: 0.85 },
         { name: 'Čist', confidence: 0.90 },
@@ -163,16 +163,20 @@ export default function FeedScreen() {
     hideMatchModal();
   };
 
-  const handleButtonSwipe = (action: SwipeAction) => {
-    handleSwipe(action);
-  };
+  // Get current user's vibes for MatchModal
+  const currentUserVibes = user?.attributes?.map(a => a.name) || ['Chill'];
+  const currentUserImage = user?.images?.[0];
 
   // Not logged in state
   if (!user) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>ZZZimeri</Text>
+          <Image
+            source={require('../../assets/veliki logo.png')}
+            style={styles.headerLogo}
+            resizeMode="contain"
+          />
         </View>
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyEmoji}>👋</Text>
@@ -191,10 +195,14 @@ export default function FeedScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>ZZZimeri</Text>
+          <Image
+            source={require('../../assets/veliki logo.png')}
+            style={styles.headerLogo}
+            resizeMode="contain"
+          />
         </View>
         <View style={styles.emptyContainer}>
-          <ActivityIndicator size="large" color="#FF6B6B" />
+          <ActivityIndicator size="large" color="#E991D9" />
           <Text style={styles.emptyTitle}>Učitavanje...</Text>
         </View>
       </View>
@@ -206,7 +214,11 @@ export default function FeedScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>ZZZimeri</Text>
+          <Image
+            source={require('../../assets/veliki logo.png')}
+            style={styles.headerLogo}
+            resizeMode="contain"
+          />
         </View>
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyEmoji}>⚠️</Text>
@@ -225,7 +237,11 @@ export default function FeedScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>ZZZimeri</Text>
+          <Image
+            source={require('../../assets/veliki logo.png')}
+            style={styles.headerLogo}
+            resizeMode="contain"
+          />
         </View>
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyEmoji}>🏠</Text>
@@ -244,15 +260,7 @@ export default function FeedScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>ZZZimeri</Text>
-        <Text style={styles.headerSubtitle}>
-          {feedItems.length - currentIndex} stanova
-        </Text>
-      </View>
-
-      {/* Cards Container */}
+      {/* Cards Container - Full screen, no header */}
       <View style={styles.cardsContainer}>
         {/* Next card (behind) */}
         {nextItemData && (
@@ -274,36 +282,15 @@ export default function FeedScreen() {
         />
       </View>
 
-      {/* Action Buttons */}
-      <View style={styles.actions}>
-        <Pressable
-          style={[styles.actionButton, styles.dislikeButton]}
-          onPress={() => handleButtonSwipe('dislike')}
-        >
-          <Text style={[styles.actionIcon, styles.dislikeIcon]}>✕</Text>
-        </Pressable>
-
-        <Pressable
-          style={[styles.actionButton, styles.superlikeButton]}
-          onPress={() => handleButtonSwipe('superlike')}
-        >
-          <Text style={[styles.actionIcon, styles.superlikeIcon]}>⭐</Text>
-        </Pressable>
-
-        <Pressable
-          style={[styles.actionButton, styles.likeButton]}
-          onPress={() => handleButtonSwipe('like')}
-        >
-          <Text style={[styles.actionIcon, styles.likeIcon]}>♥</Text>
-        </Pressable>
-      </View>
-
       {/* Match Modal */}
       <MatchModal
         visible={showMatchModal}
         match={currentMatch}
         onSendMessage={handleSendMessage}
         onKeepSwiping={handleKeepSwiping}
+        currentUserImage={currentUserImage}
+        currentUserName={user?.name}
+        currentUserVibes={currentUserVibes}
       />
     </View>
   );
@@ -312,7 +299,7 @@ export default function FeedScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F8F8F8',
   },
   header: {
     paddingTop: 50,
@@ -320,77 +307,21 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     backgroundColor: '#fff',
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
   },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FF6B6B',
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#999',
+  headerLogo: {
+    width: 140,
+    height: 36,
   },
   cardsContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 10,
-  },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 24,
-    paddingVertical: 20,
-    paddingBottom: 30,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
-  },
-  actionButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  dislikeButton: {
-    backgroundColor: '#fff',
-    borderWidth: 3,
-    borderColor: '#FF6B6B',
-  },
-  superlikeButton: {
-    backgroundColor: '#fff',
-    borderWidth: 3,
-    borderColor: '#4A90D9',
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-  },
-  likeButton: {
-    backgroundColor: '#FF6B6B',
-  },
-  actionIcon: {
-    fontSize: 28,
-  },
-  dislikeIcon: {
-    color: '#FF6B6B',
-  },
-  superlikeIcon: {
-    color: '#4A90D9',
-    fontSize: 24,
-  },
-  likeIcon: {
-    color: '#fff',
+    paddingTop: 16,
+    paddingBottom: 90, // Space for tab bar
   },
   emptyContainer: {
     flex: 1,
@@ -416,10 +347,10 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   refreshButton: {
-    backgroundColor: '#FF6B6B',
+    backgroundColor: '#E991D9',
     paddingHorizontal: 32,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 25,
   },
   refreshButtonText: {
     color: '#fff',
