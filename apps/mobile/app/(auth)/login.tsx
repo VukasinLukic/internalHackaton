@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TextInput, Pressable } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Pressable, Image } from 'react-native';
 import { Link, router } from 'expo-router';
 import { useState } from 'react';
 
@@ -7,15 +7,20 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
 
   const handleLogin = () => {
-    // TODO: Implement Clerk authentication
+    console.log('[LOGIN] 🎭 DEMO MODE - No backend needed!');
+    // Hardcoded demo - just navigate to feed
     router.replace('/(tabs)/feed');
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>ZZZimeri</Text>
-        <Text style={styles.subtitle}>Pronađi savršen stan</Text>
+        <Image
+          source={require('../../assets/veliki logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+        <Text style={styles.subtitle}>Manje stresa. Bolji cimer.</Text>
       </View>
 
       <View style={styles.form}>
@@ -30,7 +35,7 @@ export default function LoginScreen() {
         />
         <TextInput
           style={styles.input}
-          placeholder="Password"
+          placeholder="Lozinka"
           placeholderTextColor="#999"
           value={password}
           onChangeText={setPassword}
@@ -41,13 +46,14 @@ export default function LoginScreen() {
           <Text style={styles.buttonText}>Prijavi se</Text>
         </Pressable>
 
-        <Link href="/(auth)/register" asChild>
-          <Pressable style={styles.linkButton}>
-            <Text style={styles.linkText}>
-              Nemaš nalog? <Text style={styles.linkTextBold}>Registruj se</Text>
-            </Text>
-          </Pressable>
-        </Link>
+        <View style={styles.registerContainer}>
+          <Text style={styles.registerText}>Nemaš nalog? </Text>
+          <Link href="/(auth)/register" asChild>
+            <Pressable>
+              <Text style={styles.registerLink}>Registruj se</Text>
+            </Pressable>
+          </Link>
+        </View>
       </View>
     </View>
   );
@@ -57,56 +63,66 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingHorizontal: 24,
+    paddingHorizontal: 32,
     justifyContent: 'center',
   },
   header: {
     alignItems: 'center',
-    marginBottom: 48,
+    marginBottom: 80,
   },
-  title: {
-    fontSize: 42,
-    fontWeight: 'bold',
-    color: '#FF6B6B',
+  logo: {
+    width: 280,
+    height: 120,
+    marginBottom: 16,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginTop: 8,
+    fontSize: 18,
+    color: '#1a1a1a',
+    fontWeight: '400',
+    letterSpacing: 0.3,
   },
   form: {
-    gap: 16,
+    gap: 20,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 12,
-    padding: 16,
+    borderWidth: 2,
+    borderColor: '#1a1a1a',
+    borderRadius: 30,
+    padding: 18,
+    paddingHorizontal: 24,
     fontSize: 16,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: '#fff',
   },
   button: {
-    backgroundColor: '#FF6B6B',
-    padding: 16,
-    borderRadius: 12,
+    backgroundColor: '#E991D9',
+    padding: 18,
+    borderRadius: 30,
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   buttonText: {
-    color: '#fff',
+    color: '#1a1a1a',
     fontSize: 18,
     fontWeight: '600',
   },
-  linkButton: {
+  registerContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 16,
+    justifyContent: 'center',
+    marginTop: 24,
   },
-  linkText: {
-    color: '#666',
-    fontSize: 14,
+  registerText: {
+    color: '#1a1a1a',
+    fontSize: 15,
   },
-  linkTextBold: {
-    color: '#FF6B6B',
+  registerLink: {
+    color: '#E991D9',
+    fontSize: 15,
     fontWeight: '600',
   },
 });

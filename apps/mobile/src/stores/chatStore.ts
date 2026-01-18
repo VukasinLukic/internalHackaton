@@ -1,8 +1,7 @@
 import { create } from 'zustand';
 import type { Message, Conversation } from '../types';
-import { api } from '../services/api';
-import { chatSocket } from '../services/socket';
 
+// 🎭 DEMO MODE - NO SOCKET, NO API - Sve fake!
 interface ChatState {
   conversations: Conversation[];
   messages: { [matchId: string]: Message[] };
@@ -16,7 +15,7 @@ interface ChatState {
   fetchMessages: (matchId: string) => Promise<void>;
   sendMessage: (matchId: string, content: string) => Promise<boolean>;
 
-  // Real-time actions (for Socket.io)
+  // Real-time actions (FAKE)
   addMessage: (matchId: string, message: Message) => void;
   setActiveMatch: (matchId: string | null) => void;
   markAsRead: (matchId: string) => void;
@@ -35,99 +34,53 @@ export const useChatStore = create<ChatState>((set, get) => ({
   isSending: false,
   error: null,
 
+  // 🎭 FAKE - Samo simulacija
   fetchConversations: async () => {
+    console.log('[CHAT] 🎭 DEMO MODE - No real conversations');
     set({ isLoading: true, error: null });
-
-    try {
-      const response = await api.getConversations();
-
-      if (response.success && response.data) {
-        set({
-          conversations: response.data.conversations || [],
-          isLoading: false,
-        });
-      } else {
-        set({
-          error: response.error || 'Failed to fetch conversations',
-          isLoading: false,
-        });
-      }
-    } catch (error) {
-      set({
-        error: 'Network error. Please check your connection.',
-        isLoading: false,
-      });
-    }
+    await new Promise(resolve => setTimeout(resolve, 300));
+    set({ conversations: [], isLoading: false });
   },
 
+  // 🎭 FAKE - Samo simulacija
   fetchMessages: async (matchId: string) => {
+    console.log('[CHAT] 🎭 DEMO MODE - No real messages');
     set({ isLoading: true, error: null });
-
-    try {
-      const response = await api.getMessages(matchId);
-
-      if (response.success && response.data) {
-        set((state) => ({
-          messages: {
-            ...state.messages,
-            [matchId]: response.data.messages || [],
-          },
-          isLoading: false,
-        }));
-
-        // Join socket room for real-time updates
-        chatSocket.joinRoom(matchId);
-      } else {
-        set({
-          error: response.error || 'Failed to fetch messages',
-          isLoading: false,
-        });
-      }
-    } catch (error) {
-      set({
-        error: 'Network error. Please check your connection.',
-        isLoading: false,
-      });
-    }
+    await new Promise(resolve => setTimeout(resolve, 300));
+    set((state) => ({
+      messages: { ...state.messages, [matchId]: [] },
+      isLoading: false,
+    }));
   },
 
+  // 🎭 FAKE - Samo simulacija
   sendMessage: async (matchId: string, content: string) => {
+    console.log('[CHAT] 🎭 DEMO MODE - Fake message sent');
     const tempId = `temp-${Date.now()}`;
-
-    // Optimistic update
     get().addOptimisticMessage(matchId, content, tempId);
     set({ isSending: true });
+    await new Promise(resolve => setTimeout(resolve, 400));
 
-    try {
-      const response = await api.sendMessage(matchId, content);
+    const fakeMessage: Message = {
+      id: `msg-${Date.now()}`,
+      matchId,
+      senderId: 'me',
+      content,
+      timestamp: new Date().toISOString(),
+      isRead: false,
+    };
 
-      if (response.success && response.data) {
-        // Replace optimistic message with confirmed one
-        get().confirmMessage(matchId, tempId, response.data.message);
-        set({ isSending: false });
-        return true;
-      } else {
-        // Remove failed message
-        get().removeFailedMessage(matchId, tempId);
-        set({ isSending: false });
-        return false;
-      }
-    } catch (error) {
-      get().removeFailedMessage(matchId, tempId);
-      set({ isSending: false });
-      return false;
-    }
+    get().confirmMessage(matchId, tempId, fakeMessage);
+    set({ isSending: false });
+    return true;
   },
 
   addMessage: (matchId: string, message: Message) => {
     set((state) => {
       const currentMessages = state.messages[matchId] || [];
-
-      // Avoid duplicates
       if (currentMessages.some((m) => m.id === message.id)) {
         return state;
       }
-
       return {
         messages: {
           ...state.messages,
@@ -135,31 +88,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
         },
       };
     });
-
-    // Update conversation's last message
-    set((state) => ({
-      conversations: state.conversations.map((conv) =>
-        conv.matchId === matchId
-          ? { ...conv, lastMessage: message, unreadCount: conv.unreadCount + 1 }
-          : conv
-      ),
-    }));
   },
 
+  // 🎭 FAKE - No socket calls
   setActiveMatch: (matchId: string | null) => {
-    const previousMatchId = get().activeMatchId;
-
-    // Leave previous room
-    if (previousMatchId) {
-      chatSocket.leaveRoom(previousMatchId);
-    }
-
-    // Join new room
-    if (matchId) {
-      chatSocket.joinRoom(matchId);
-      get().markAsRead(matchId);
-    }
-
+    console.log('[CHAT] 🎭 DEMO MODE - Active match set (no socket)');
     set({ activeMatchId: matchId });
   },
 
@@ -175,7 +108,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const optimisticMessage: Message = {
       id: tempId,
       matchId,
-      senderId: 'me', // Will be replaced with actual user ID
+      senderId: 'me',
       content,
       timestamp: new Date().toISOString(),
       isRead: false,

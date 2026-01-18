@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../../src/stores/authStore';
 import { api, uploadMultipleToCloudinary } from '../../src/services';
-import type { UserAttribute } from '../../src/types';
+import type { UserAttribute, UserRole } from '../../src/types';
 
 export default function PhotoAnalysisScreen() {
   const { onboardingRole, onboardingName, onboardingBio, onboardingPhotos, login, clearOnboarding } = useAuthStore();
@@ -12,6 +12,7 @@ export default function PhotoAnalysisScreen() {
   const [traits, setTraits] = useState<UserAttribute[]>([]);
   const [visibleTraits, setVisibleTraits] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
+  const [_mockUser, setMockUser] = useState<any>(null);
 
   useEffect(() => {
     analyzeProfile();
@@ -19,68 +20,80 @@ export default function PhotoAnalysisScreen() {
 
   const analyzeProfile = async () => {
     try {
-      // Upload images to Cloudinary first
-      const uploadResult = await uploadMultipleToCloudinary(onboardingPhotos);
+      console.log('[PHOTO-ANALYSIS] 🎭 HARDCODED DEMO MODE - No backend needed!');
 
-      if (!uploadResult.success || uploadResult.urls.length === 0) {
-        Alert.alert(
-          'Greška',
-          uploadResult.errors[0] || 'Nije moguće uploadovati slike'
-        );
-        router.back();
-        return;
-      }
+      // ===== SIMULATE "UPLOADING" =====
+      await new Promise(resolve => setTimeout(resolve, 1200));
 
-      const uploadedImageUrls = uploadResult.urls;
+      // ===== CREATE MOCK USER (NO API CALL) =====
+      const mockUserId = `demo_user_${Date.now()}`;
+      const mockUser = {
+        id: mockUserId,
+        name: onboardingName || 'Demo Korisnik',
+        email: `${mockUserId}@zzzimeri.demo`,
+        role: (onboardingRole || 'seeker') as UserRole,
+        bio: onboardingBio || 'Demo profil - hardcoded mode',
+        images: onboardingPhotos, // Local URIs
+        attributes: [] as UserAttribute[],
+        createdAt: new Date().toISOString(),
+      };
 
-      // Create user
-      const createUserResult = await api.createUser({
-        name: onboardingName,
-        email: `${Date.now()}@temp.com`, // TODO: Use real email from auth
-        role: onboardingRole || 'seeker',
-        bio: onboardingBio,
-        images: uploadedImageUrls,
-      });
+      setUserId(mockUser.id);
+      console.log('[PHOTO-ANALYSIS] ✅ Demo user created (hardcoded)');
 
-      if (!createUserResult.success || !createUserResult.data) {
-        Alert.alert('Greška', createUserResult.error || 'Neuspelo kreiranje profila');
-        router.back();
-        return;
-      }
+      // ===== SIMULATE "AI ANALYSIS" =====
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
-      // Backend returns { success: true, data: { id, name, email, ... } }
-      const createdUser = createUserResult.data;
-      setUserId(createdUser.id);
+      // Hardcoded traits based on role
+      const demoTraits: UserAttribute[] = onboardingRole === 'seeker'
+        ? [
+            { name: 'Organizovan', confidence: 0.92 },
+            { name: 'Minimalist', confidence: 0.88 },
+            { name: 'Tih', confidence: 0.85 },
+            { name: 'Čist', confidence: 0.90 },
+          ]
+        : [
+            { name: 'Druželjubiv', confidence: 0.90 },
+            { name: 'Pouzdan', confidence: 0.87 },
+            { name: 'Komunikativan', confidence: 0.85 },
+            { name: 'Fleksibilan', confidence: 0.82 },
+          ];
 
-      // Analyze profile with uploaded images
-      const analysisResult = await api.analyzeProfile(createdUser.id, uploadedImageUrls, onboardingBio);
-
+      setTraits(demoTraits);
+      mockUser.attributes = [...demoTraits];
+      setMockUser(mockUser);
       setIsAnalyzing(false);
 
-      if (analysisResult.success && analysisResult.data) {
-        const attributes = analysisResult.data.attributes || analysisResult.data;
-        setTraits(attributes);
+      console.log('[PHOTO-ANALYSIS] ✅ Demo AI analysis complete (hardcoded)');
 
-        // Update user object with analyzed attributes
-        createdUser.attributes = attributes;
-      } else {
-        // Use fallback mock data if analysis fails
-        const fallbackTraits = [
-          { name: 'Organizovan', confidence: 0.85 },
-          { name: 'Tih', confidence: 0.78 },
-          { name: 'Minimalist', confidence: 0.82 },
-        ];
-        setTraits(fallbackTraits);
-        createdUser.attributes = fallbackTraits;
-      }
-
-      // Save user to auth store
-      login(createdUser.id, createdUser);
+      // Save to local store (no backend)
+      login(mockUser.id, mockUser);
+      console.log('[PHOTO-ANALYSIS] ✅ User logged in - DEMO MODE ACTIVE');
 
     } catch (error) {
-      console.error('Profile analysis error:', error);
+      console.error('[PHOTO-ANALYSIS] Demo error:', error);
+
+      // Even if something crashes, create fallback user
+      const fallbackUser = {
+        id: `fallback_${Date.now()}`,
+        name: onboardingName || 'Demo Korisnik',
+        email: 'demo@zzzimeri.app',
+        role: (onboardingRole || 'seeker') as UserRole,
+        bio: onboardingBio || '',
+        images: onboardingPhotos,
+        attributes: [
+          { name: 'Prijatan', confidence: 0.85 },
+          { name: 'Kooperativan', confidence: 0.80 },
+        ],
+        createdAt: new Date().toISOString(),
+      };
+
+      setTraits(fallbackUser.attributes);
+      setMockUser(fallbackUser);
       setIsAnalyzing(false);
-      Alert.alert('Greška', 'Došlo je do greške pri analizi');
+      login(fallbackUser.id, fallbackUser);
+
+      console.log('[PHOTO-ANALYSIS] ✅ Fallback demo user created');
     }
   };
 
@@ -106,10 +119,16 @@ export default function PhotoAnalysisScreen() {
 
   return (
     <View style={styles.container}>
+      {!isAnalyzing && (
+        <View style={styles.logoContainer}>
+          <Text style={styles.logoText}>zzimeri</Text>
+        </View>
+      )}
+
       {isAnalyzing ? (
         <View style={styles.analyzingContainer}>
           <View style={styles.loaderWrapper}>
-            <ActivityIndicator size="large" color="#FF6B6B" />
+            <ActivityIndicator size="large" color="#E991D9" />
           </View>
           <Text style={styles.analyzingText}>Analiziramo tvoj vibe...</Text>
           <Text style={styles.analyzingSubtext}>
@@ -118,33 +137,31 @@ export default function PhotoAnalysisScreen() {
         </View>
       ) : (
         <View style={styles.resultsContainer}>
-          <Text style={styles.sparkle}>✨</Text>
-          <Text style={styles.title}>AI je otkrio:</Text>
+          <Text style={styles.title}>Koji je tvoj vajb?</Text>
 
-          <View style={styles.traitsList}>
-            {traits.slice(0, visibleTraits).map((trait, index) => (
-              <View key={index} style={styles.traitItem}>
-                <View style={styles.traitBadge}>
-                  <Text style={styles.traitName}>{trait.name}</Text>
-                  <Text style={styles.traitConfidence}>
-                    {Math.round(trait.confidence * 100)}%
-                  </Text>
-                </View>
-                <View style={styles.confidenceBar}>
-                  <View
-                    style={[
-                      styles.confidenceBarFill,
-                      { width: `${trait.confidence * 100}%` }
-                    ]}
-                  />
-                </View>
+          <View style={styles.imageCard}>
+            <View style={styles.imagePlaceholder}>
+              {/* Mock room image */}
+              <View style={styles.vibeTagsContainer}>
+                <Pressable style={styles.vibeTag}>
+                  <Text style={styles.vibeTagText}>AI Vibe Check ✨</Text>
+                </Pressable>
+                <Pressable style={styles.vibeTag}>
+                  <Text style={styles.vibeTagText}>#Modern</Text>
+                </Pressable>
+                <Pressable style={styles.vibeTag}>
+                  <Text style={styles.vibeTagText}>#Bright</Text>
+                </Pressable>
+                <Pressable style={styles.vibeTag}>
+                  <Text style={styles.vibeTagText}>#Plants</Text>
+                </Pressable>
               </View>
-            ))}
+            </View>
           </View>
 
           {visibleTraits >= traits.length && (
             <Pressable style={styles.button} onPress={handleContinue}>
-              <Text style={styles.buttonText}>Nastavi</Text>
+              <Text style={styles.buttonText}>Potvrdi vibe</Text>
             </Pressable>
           )}
         </View>
@@ -159,6 +176,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     paddingHorizontal: 24,
     justifyContent: 'center',
+  },
+  logoContainer: {
+    position: 'absolute',
+    top: 60,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  logoText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
   },
   analyzingContainer: {
     alignItems: 'center',
@@ -180,62 +209,64 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   resultsContainer: {
+    flex: 1,
+    paddingTop: 120,
     alignItems: 'center',
-  },
-  sparkle: {
-    fontSize: 64,
-    marginBottom: 16,
   },
   title: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#1a1a1a',
-    marginBottom: 32,
-  },
-  traitsList: {
-    width: '100%',
-    gap: 16,
     marginBottom: 40,
+    textAlign: 'center',
   },
-  traitItem: {
+  imageCard: {
     width: '100%',
-  },
-  traitBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#F0F8FF',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-  },
-  traitName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1a1a1a',
-  },
-  traitConfidence: {
-    fontSize: 16,
-    color: '#FF6B6B',
-    fontWeight: '700',
-  },
-  confidenceBar: {
-    height: 4,
-    backgroundColor: '#E8E8E8',
-    borderRadius: 2,
-    marginTop: 8,
+    aspectRatio: 0.7,
+    marginBottom: 40,
+    borderRadius: 20,
     overflow: 'hidden',
+    borderWidth: 3,
+    borderColor: '#1a1a1a',
   },
-  confidenceBarFill: {
-    height: '100%',
-    backgroundColor: '#4A90D9',
-    borderRadius: 2,
+  imagePlaceholder: {
+    flex: 1,
+    backgroundColor: '#E5E5E5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  vibeTagsContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    padding: 20,
+  },
+  vibeTag: {
+    backgroundColor: '#E991D9',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 25,
+    alignSelf: 'flex-start',
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  vibeTagText: {
+    color: '#1a1a1a',
+    fontSize: 16,
+    fontWeight: '600',
   },
   button: {
-    backgroundColor: '#FF6B6B',
-    paddingVertical: 16,
-    paddingHorizontal: 48,
-    borderRadius: 12,
+    backgroundColor: '#E991D9',
+    paddingVertical: 18,
+    paddingHorizontal: 60,
+    borderRadius: 30,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -243,7 +274,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   buttonText: {
-    color: '#fff',
+    color: '#1a1a1a',
     fontSize: 18,
     fontWeight: '600',
   },

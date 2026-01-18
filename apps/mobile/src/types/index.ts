@@ -7,18 +7,19 @@ export interface UserAttribute {
 }
 
 export interface UserPreferences {
-  budget: {
+  budget?: number | {
     min: number;
     max: number;
   };
+  vibes?: string[];
   location?: {
     city: string;
     radius: number; // km
   };
-  smoker: boolean;
-  pets: boolean;
-  cleanliness: number; // 1-5
-  sleepSchedule: 'early' | 'night';
+  smoker?: boolean;
+  pets?: boolean;
+  cleanliness?: number; // 1-5
+  sleepSchedule?: 'early' | 'night';
 }
 
 export interface User {

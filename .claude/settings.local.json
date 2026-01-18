@@ -26,7 +26,16 @@
       "Bash(git merge:*)",
       "Bash(git push:*)",
       "Bash(npm run build:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(ls:*)",
+      "Bash(npm run dev:*)",
+      "Bash(node --version:*)",
+      "Bash(npm --version:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(ping:*)",
+      "Bash(npm run clean-start:*)",
+      "Bash(npx tsc --noEmit)"
     ]
   }
 }

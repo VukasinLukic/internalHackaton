@@ -6,176 +6,137 @@ import { api } from '../../src/services/api';
 
 export default function PreferencesScreen() {
   const { user, updateUser, clearOnboarding } = useAuthStore();
-  const [budget, setBudget] = useState({ min: 200, max: 500 });
-  const [smoker, setSmoker] = useState(false);
-  const [pets, setPets] = useState(false);
-  const [cleanliness, setCleanliness] = useState(3);
-  const [sleepSchedule, setSleepSchedule] = useState<'early' | 'night'>('early');
+  const [budget, setBudget] = useState(300);
+  const [selectedVibes, setSelectedVibes] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  const vibes = [
+    'Nepušač',
+    'Rano ustajem',
+    'Gamer',
+    'Pet-friendly',
+    'Uredan',
+    'Socijalan',
+  ];
+
+  const toggleVibe = (vibe: string) => {
+    setSelectedVibes(prev =>
+      prev.includes(vibe)
+        ? prev.filter(v => v !== vibe)
+        : [...prev, vibe]
+    );
+  };
+
   const handleFinish = async () => {
-    if (!user) {
-      Alert.alert('Greška', 'Nisi prijavljen');
-      return;
-    }
+    console.log('[PREFERENCES] 🎭 DEMO MODE - Saving preferences locally');
+
     setIsLoading(true);
+
+    // ===== HARDCODED - NO API CALL =====
     try {
-      // Format preferences according to backend DTO
+      // Simulate saving delay for realism
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      // Save preferences to local user object (no backend)
       const preferences = {
-        budget: {
-          min: budget.min,
-          max: budget.max,
-        },
-        location: {
-          city: 'Beograd', // Default city for now
-          radius: 10, // Default 10km radius
-        },
-        lifestyle: {
-          smoker,
-          pets,
-          earlyBird: sleepSchedule === 'early',
-          cleanliness,
-        },
+        budget,
+        vibes: selectedVibes,
+        location: { city: 'Beograd', radius: 10 },
       };
 
-      const result = await api.updatePreferences(user.id, preferences);
-      if (result.success && result.data) {
-        updateUser(result.data);
-        clearOnboarding();
-        router.replace('/(tabs)/feed');
-      } else {
-        Alert.alert('Greška', result.error || 'Neuspelo čuvanje');
+      // Update local user state
+      if (user) {
+        updateUser({ preferences });
       }
+
+      console.log('[PREFERENCES] ✅ Preferences saved locally (demo mode)');
+      clearOnboarding();
+
+      // Navigate to feed
+      router.replace('/(tabs)/feed');
+
     } catch (error) {
-      Alert.alert('Greška', 'Došlo je do greške');
+      console.error('[PREFERENCES] Demo error:', error);
+      // Even if error, navigate anyway (demo mode)
+      router.replace('/(tabs)/feed');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Tvoje preference</Text>
-        <Text style={styles.subtitle}>Pomozi nam da nađemo savršen match</Text>
+    <View style={styles.container}>
+      <View style={styles.logoContainer}>
+        <Text style={styles.logoText}>zzimeri</Text>
       </View>
 
-      {/* Budget */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Budžet (€/mesec)</Text>
-        <View style={styles.budgetDisplay}>
-          <Text style={styles.budgetText}>
-            {budget.min}€ - {budget.max}€
-          </Text>
-        </View>
-        <View style={styles.budgetButtons}>
-          <Pressable
-            style={styles.budgetButton}
-            onPress={() => setBudget({ ...budget, min: Math.max(100, budget.min - 50) })}
-          >
-            <Text style={styles.budgetButtonText}>-50</Text>
-          </Pressable>
-          <Pressable
-            style={styles.budgetButton}
-            onPress={() => setBudget({ ...budget, max: budget.max + 100 })}
-          >
-            <Text style={styles.budgetButtonText}>+100</Text>
-          </Pressable>
-        </View>
-      </View>
+      <ScrollView style={styles.scrollContent} contentContainerStyle={styles.content}>
+        <Text style={styles.title}>Kakav si cimer?</Text>
 
-      {/* Lifestyle */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Životni stil</Text>
-
-        <View style={styles.toggleRow}>
-          <Text style={styles.toggleLabel}>Pušač?</Text>
-          <View style={styles.toggleButtons}>
-            <Pressable
-              style={[styles.toggleButton, !smoker && styles.toggleButtonActive]}
-              onPress={() => setSmoker(false)}
-            >
-              <Text style={[styles.toggleButtonText, !smoker && styles.toggleButtonTextActive]}>
-                Ne
-              </Text>
-            </Pressable>
-            <Pressable
-              style={[styles.toggleButton, smoker && styles.toggleButtonActive]}
-              onPress={() => setSmoker(true)}
-            >
-              <Text style={[styles.toggleButtonText, smoker && styles.toggleButtonTextActive]}>
-                Da
-              </Text>
-            </Pressable>
+        {/* Budget */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Tvoj mesečni budžet:</Text>
+          <Text style={styles.budgetText}>{budget} €</Text>
+          <View style={styles.sliderContainer}>
+            <View style={styles.sliderTrack}>
+              <View style={[styles.sliderFill, { width: `${((budget - 100) / 900) * 100}%` }]} />
+            </View>
+            <View style={styles.budgetControls}>
+              <Pressable
+                style={styles.budgetControlButton}
+                onPress={() => setBudget(Math.max(100, budget - 50))}
+              >
+                <Text style={styles.budgetControlText}>-</Text>
+              </Pressable>
+              <Pressable
+                style={styles.budgetControlButton}
+                onPress={() => setBudget(Math.min(1000, budget + 50))}
+              >
+                <Text style={styles.budgetControlText}>+</Text>
+              </Pressable>
+            </View>
           </View>
         </View>
 
-        <View style={styles.toggleRow}>
-          <Text style={styles.toggleLabel}>Ljubimci?</Text>
-          <View style={styles.toggleButtons}>
-            <Pressable
-              style={[styles.toggleButton, !pets && styles.toggleButtonActive]}
-              onPress={() => setPets(false)}
-            >
-              <Text style={[styles.toggleButtonText, !pets && styles.toggleButtonTextActive]}>
-                Ne
-              </Text>
-            </Pressable>
-            <Pressable
-              style={[styles.toggleButton, pets && styles.toggleButtonActive]}
-              onPress={() => setPets(true)}
-            >
-              <Text style={[styles.toggleButtonText, pets && styles.toggleButtonTextActive]}>
-                Da
-              </Text>
-            </Pressable>
+        {/* Vibes */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Tvoj vibe (izaberi sve što važi):</Text>
+          <View style={styles.vibesContainer}>
+            {vibes.map((vibe) => (
+              <Pressable
+                key={vibe}
+                style={[
+                  styles.vibeButton,
+                  selectedVibes.includes(vibe) && styles.vibeButtonActive,
+                ]}
+                onPress={() => toggleVibe(vibe)}
+              >
+                <Text
+                  style={[
+                    styles.vibeButtonText,
+                    selectedVibes.includes(vibe) && styles.vibeButtonTextActive,
+                  ]}
+                >
+                  {vibe}
+                </Text>
+              </Pressable>
+            ))}
           </View>
         </View>
-      </View>
 
-      {/* Cleanliness */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Urednost</Text>
-        <View style={styles.starsRow}>
-          {[1, 2, 3, 4, 5].map((star) => (
-            <Pressable key={star} onPress={() => setCleanliness(star)}>
-              <Text style={[styles.star, star <= cleanliness && styles.starActive]}>
-                ★
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-
-      {/* Sleep Schedule */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Raspored spavanja</Text>
-        <View style={styles.scheduleButtons}>
-          <Pressable
-            style={[styles.scheduleButton, sleepSchedule === 'early' && styles.scheduleButtonActive]}
-            onPress={() => setSleepSchedule('early')}
-          >
-            <Text style={styles.scheduleEmoji}>🌅</Text>
-            <Text style={[styles.scheduleText, sleepSchedule === 'early' && styles.scheduleTextActive]}>
-              Ranoranioc
-            </Text>
-          </Pressable>
-          <Pressable
-            style={[styles.scheduleButton, sleepSchedule === 'night' && styles.scheduleButtonActive]}
-            onPress={() => setSleepSchedule('night')}
-          >
-            <Text style={styles.scheduleEmoji}>🌙</Text>
-            <Text style={[styles.scheduleText, sleepSchedule === 'night' && styles.scheduleTextActive]}>
-              Noćna ptica
-            </Text>
-          </Pressable>
-        </View>
-      </View>
-
-      <Pressable style={[styles.button, isLoading && { opacity: 0.6 }]} onPress={handleFinish} disabled={isLoading}>
-        {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Započni pretragu 🎉</Text>}
-      </Pressable>
-    </ScrollView>
+        <Pressable
+          style={[styles.button, isLoading && { opacity: 0.6 }]}
+          onPress={handleFinish}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator color="#1a1a1a" />
+          ) : (
+            <Text style={styles.buttonText}>Dalje</Text>
+          )}
+        </Pressable>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -184,141 +145,127 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  content: {
-    paddingHorizontal: 24,
-    paddingTop: 60,
-    paddingBottom: 40,
+  logoContainer: {
+    position: 'absolute',
+    top: 60,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 10,
   },
-  header: {
-    marginBottom: 32,
+  logoText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+  },
+  scrollContent: {
+    flex: 1,
+  },
+  content: {
+    paddingHorizontal: 32,
+    paddingTop: 120,
+    paddingBottom: 40,
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
     color: '#1a1a1a',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginTop: 8,
+    marginBottom: 40,
   },
   section: {
-    marginBottom: 28,
+    marginBottom: 40,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1a1a1a',
-    marginBottom: 12,
-  },
-  budgetDisplay: {
-    backgroundColor: '#F8F8F8',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  budgetText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FF6B6B',
-  },
-  budgetButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  budgetButton: {
-    flex: 1,
-    backgroundColor: '#F0F0F0',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  budgetButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#666',
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    fontWeight: '400',
+    color: '#1a1a1a',
     marginBottom: 16,
   },
-  toggleLabel: {
-    fontSize: 16,
+  budgetText: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+    marginBottom: 16,
+  },
+  sliderContainer: {
+    width: '100%',
+  },
+  sliderTrack: {
+    width: '100%',
+    height: 8,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  sliderFill: {
+    height: '100%',
+    backgroundColor: '#E991D9',
+    borderRadius: 4,
+  },
+  budgetControls: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 20,
+  },
+  budgetControlButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#E991D9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  budgetControlText: {
+    fontSize: 24,
+    fontWeight: 'bold',
     color: '#1a1a1a',
   },
-  toggleButtons: {
+  vibesContainer: {
     flexDirection: 'row',
-    gap: 8,
-  },
-  toggleButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-    backgroundColor: '#F0F0F0',
-  },
-  toggleButtonActive: {
-    backgroundColor: '#FF6B6B',
-  },
-  toggleButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#666',
-  },
-  toggleButtonTextActive: {
-    color: '#fff',
-  },
-  starsRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  star: {
-    fontSize: 32,
-    color: '#E0E0E0',
-  },
-  starActive: {
-    color: '#FFD700',
-  },
-  scheduleButtons: {
-    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 12,
   },
-  scheduleButton: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: '#F8F8F8',
-    alignItems: 'center',
+  vibeButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 25,
     borderWidth: 2,
-    borderColor: 'transparent',
+    borderColor: '#1a1a1a',
+    backgroundColor: '#fff',
   },
-  scheduleButtonActive: {
-    borderColor: '#FF6B6B',
-    backgroundColor: '#FFF5F5',
+  vibeButtonActive: {
+    backgroundColor: '#E991D9',
+    borderColor: '#E991D9',
   },
-  scheduleEmoji: {
-    fontSize: 32,
-    marginBottom: 8,
-  },
-  scheduleText: {
-    fontSize: 14,
+  vibeButtonText: {
+    fontSize: 16,
     fontWeight: '500',
-    color: '#666',
+    color: '#1a1a1a',
   },
-  scheduleTextActive: {
-    color: '#FF6B6B',
+  vibeButtonTextActive: {
+    color: '#1a1a1a',
+    fontWeight: '600',
   },
   button: {
-    backgroundColor: '#FF6B6B',
-    padding: 16,
-    borderRadius: 12,
+    backgroundColor: '#E991D9',
+    padding: 18,
+    borderRadius: 30,
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   buttonText: {
-    color: '#fff',
+    color: '#1a1a1a',
     fontSize: 18,
     fontWeight: '600',
   },

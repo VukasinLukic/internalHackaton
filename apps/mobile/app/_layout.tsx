@@ -1,25 +1,11 @@
 import { Stack } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet } from 'react-native';
-import { useEffect } from 'react';
-import { useAuthStore } from '../src/stores/authStore';
-import { chatSocket } from '../src/services/socket';
 
+// 🎭 DEMO MODE - NO SOCKET INITIALIZATION!
 export default function RootLayout() {
-  const { user } = useAuthStore();
-
-  // Initialize Socket.io when user logs in
-  useEffect(() => {
-    if (user) {
-      chatSocket.connect();
-    } else {
-      chatSocket.disconnect();
-    }
-
-    return () => {
-      chatSocket.disconnect();
-    };
-  }, [user]);
+  // Socket initialization REMOVED - demo mode only!
+  console.log('[LAYOUT] 🎭 DEMO MODE - No socket initialization');
 
   return (
     <GestureHandlerRootView style={styles.container}>

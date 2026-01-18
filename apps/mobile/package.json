@@ -3,14 +3,15 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "scripts": {
-    "dev": "expo start",
-    "start": "expo start",
+    "dev": "expo start --clear --port 8084",
+    "start": "expo start --port 8084",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
     "build": "expo export",
     "lint": "eslint .",
-    "clean": "rm -rf node_modules .expo"
+    "clean": "rm -rf node_modules .expo",
+    "clean-start": "expo start --clear --port 8084"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",

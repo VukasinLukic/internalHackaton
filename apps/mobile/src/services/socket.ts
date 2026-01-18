@@ -1,166 +1,66 @@
-import { io, Socket } from 'socket.io-client';
-import { useAuthStore } from '../stores/authStore';
-import type { Message } from '../types';
+// 🎭 DEMO MODE - FAKE SOCKET SERVICE - NO REAL CONNECTIONS!
 
-const WS_URL = process.env.EXPO_PUBLIC_WS_URL || 'http://localhost:3000';
-
-// Lazy import to avoid circular dependency
-const getChatStore = () => require('../stores/chatStore').useChatStore;
-
+// Dummy types to keep TypeScript happy
 class ChatSocketService {
-  private socket: Socket | null = null;
   private isConnected = false;
 
+  // 🎭 FAKE - Ne connectuje se uopšte
   connect(): void {
-    if (this.socket?.connected) {
-      return;
-    }
-
-    const { user } = useAuthStore.getState();
-
-    if (!user) {
-      console.warn('Cannot connect socket: No user logged in');
-      return;
-    }
-
-    this.socket = io(WS_URL, {
-      transports: ['websocket'],
-      autoConnect: true,
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-    });
-
-    this.setupListeners();
-
-    // Authenticate after connection
-    this.socket.on('connect', () => {
-      console.log('Socket connected, authenticating...');
-      this.socket?.emit('authenticate', {
-        userId: user.id,
-        role: user.role
-      });
-      this.isConnected = true;
-    });
+    console.log('[SOCKET] 🎭 DEMO MODE - Fake socket connect (no real connection)');
+    this.isConnected = false; // Uvek false, ne connectujemo se
   }
 
-  private setupListeners(): void {
-    if (!this.socket) return;
-
-    // Authentication success
-    this.socket.on('authenticated', (data: { userId: string; socketId: string }) => {
-      console.log('Socket authenticated:', data);
-    });
-
-    this.socket.on('disconnect', (reason) => {
-      console.log('Socket disconnected:', reason);
-      this.isConnected = false;
-    });
-
-    this.socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error);
-      this.isConnected = false;
-    });
-
-    // Listen for new messages (backend event: new_message)
-    this.socket.on('new_message', (message: Message) => {
-      console.log('New message received:', message);
-      if (message.matchId) {
-        getChatStore().getState().addMessage(message.matchId, message);
-      }
-    });
-
-    // Listen for typing indicators
-    this.socket.on('user_typing', (data: { userId: string; matchId: string }) => {
-      // Can be used to show typing indicator in UI
-      console.log(`User ${data.userId} is typing in ${data.matchId}`);
-    });
-
-    this.socket.on('user_stopped_typing', (data: { userId: string; matchId: string }) => {
-      console.log(`User ${data.userId} stopped typing in ${data.matchId}`);
-    });
-
-    // Listen for read receipts
-    this.socket.on('message_read', (data: { messageId: string; userId: string }) => {
-      console.log(`Message ${data.messageId} read by ${data.userId}`);
-    });
-
-    // Listen for match notifications
-    this.socket.on('new_match', (match: any) => {
-      console.log('New match received:', match);
-      // Could trigger a notification or update match store
-    });
-
-    // Listen for match status updates
-    this.socket.on('match_status_updated', (data: { status: string; match: any }) => {
-      console.log('Match status updated:', data);
-    });
-
-    // Listen for joined match room confirmation
-    this.socket.on('joined_match', (data: { matchId: string }) => {
-      console.log('Joined match room:', data.matchId);
-    });
-  }
-
+  // 🎭 FAKE - Ništa ne radi
   disconnect(): void {
-    if (this.socket) {
-      this.socket.disconnect();
-      this.socket = null;
-      this.isConnected = false;
-    }
+    console.log('[SOCKET] 🎭 DEMO MODE - Fake socket disconnect');
+    this.isConnected = false;
   }
 
+  // 🎭 FAKE - Ništa ne radi
   joinMatch(matchId: string): void {
-    if (this.socket?.connected) {
-      this.socket.emit('join_match', matchId);
-    }
+    console.log('[SOCKET] 🎭 DEMO MODE - Fake join match:', matchId);
   }
 
+  // 🎭 FAKE - Ništa ne radi
   leaveMatch(matchId: string): void {
-    if (this.socket?.connected) {
-      this.socket.emit('leave_match', matchId);
-    }
+    console.log('[SOCKET] 🎭 DEMO MODE - Fake leave match:', matchId);
   }
 
+  // 🎭 FAKE - Ništa ne radi
   sendMessage(matchId: string, content: string): void {
-    // NOTE: We'll use HTTP API for sending messages, not socket
-    // Socket will just receive new_message events
-    console.warn('Use api.sendMessage() instead of socket for sending messages');
+    console.log('[SOCKET] 🎭 DEMO MODE - Fake send message');
   }
 
+  // 🎭 FAKE - Ništa ne radi
   sendTypingStart(matchId: string): void {
-    if (this.socket?.connected) {
-      this.socket.emit('typing_start', { matchId });
-    }
+    console.log('[SOCKET] 🎭 DEMO MODE - Fake typing start');
   }
 
+  // 🎭 FAKE - Ništa ne radi
   sendTypingStop(matchId: string): void {
-    if (this.socket?.connected) {
-      this.socket.emit('typing_stop', { matchId });
-    }
+    console.log('[SOCKET] 🎭 DEMO MODE - Fake typing stop');
   }
 
+  // 🎭 FAKE - Ništa ne radi
   markAsRead(messageId: string): void {
-    // NOTE: Use HTTP API for marking as read
-    console.warn('Use api.markMessageAsRead() instead');
+    console.log('[SOCKET] 🎭 DEMO MODE - Fake mark as read');
   }
 
-  // Check if socket is connected
+  // 🎭 FAKE - Uvek false, nikad connectovan
   getConnectionStatus(): boolean {
-    return this.isConnected && (this.socket?.connected ?? false);
+    return false;
   }
 
-  // Reconnect with new token (after login)
+  // 🎭 FAKE - Ništa ne radi
   reconnectWithToken(): void {
-    this.disconnect();
-    this.connect();
+    console.log('[SOCKET] 🎭 DEMO MODE - Fake reconnect');
   }
 }
 
-// Export singleton instance
+// Export singleton instance (FAKE)
 export const chatSocket = new ChatSocketService();
 
-// Hook for using socket in components
+// Hook for using socket in components (FAKE)
 export const useSocket = () => {
   return {
     connect: () => chatSocket.connect(),
