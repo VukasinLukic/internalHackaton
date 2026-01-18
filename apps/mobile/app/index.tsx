@@ -1,28 +1,8 @@
-import { Text, View, StyleSheet } from 'react-native';
+import { Redirect } from 'expo-router';
 
-export default function HomeScreen() {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.title}>ZZZimeri</Text>
-      <Text style={styles.subtitle}>Tinder za stanove i cimere</Text>
-    </View>
-  );
+export default function Index() {
+  // TODO: Check if user is authenticated
+  // If authenticated, redirect to feed
+  // If not, redirect to login
+  return <Redirect href="/(auth)/login" />;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginTop: 8,
-  },
-});
