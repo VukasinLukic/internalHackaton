@@ -13,6 +13,7 @@ interface MatchState {
 
   // Actions
   fetchMatches: () => Promise<void>;
+  fetchMatch: (matchId: string) => Promise<void>;
   acceptMatch: (matchId: string) => Promise<boolean>;
   rejectMatch: (matchId: string) => Promise<boolean>;
   updateMatchStatus: (matchId: string, status: MatchStatus) => void;
@@ -56,6 +57,31 @@ export const useMatchStore = create<MatchState>((set, get) => ({
         error: 'Network error. Please check your connection.',
         isLoading: false,
       });
+    }
+  },
+
+  fetchMatch: async (matchId: string) => {
+    try {
+      const response = await api.getMatch(matchId);
+
+      if (response.success && response.data) {
+        const match = response.data.match;
+        const existingMatches = get().matches;
+
+        // Add or update the match in the list
+        const matchExists = existingMatches.some((m) => m.id === matchId);
+        const updatedMatches = matchExists
+          ? existingMatches.map((m) => (m.id === matchId ? match : m))
+          : [...existingMatches, match];
+
+        set({
+          matches: updatedMatches,
+          pendingMatches: updatedMatches.filter((m) => m.status === 'pending'),
+          acceptedMatches: updatedMatches.filter((m) => m.status === 'accepted'),
+        });
+      }
+    } catch (error) {
+      console.error('Fetch match error:', error);
     }
   },
 

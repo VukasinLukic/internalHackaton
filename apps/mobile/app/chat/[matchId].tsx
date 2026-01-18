@@ -7,69 +7,77 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { useState, useRef } from 'react';
-
-const MOCK_MESSAGES = [
-  {
-    id: '1',
-    text: 'Zdravo! Video sam tvoj profil i mislim da bi odlično odgovarali za stan.',
-    senderId: 'other',
-    timestamp: '14:20',
-  },
-  {
-    id: '2',
-    text: 'Zdravo! Da, i meni se sviđa stan. Možeš li mi reći više o lokaciji?',
-    senderId: 'me',
-    timestamp: '14:22',
-  },
-  {
-    id: '3',
-    text: 'Naravno! Stan je na odličnoj lokaciji, 5 minuta do tramvaja i ima sve prodavnice u blizini.',
-    senderId: 'other',
-    timestamp: '14:25',
-  },
-  {
-    id: '4',
-    text: 'Super! Možemo da se nađemo sutra da vidim stan?',
-    senderId: 'me',
-    timestamp: '14:28',
-  },
-];
-
-const MOCK_MATCH = {
-  otherUser: {
-    name: 'Marko P.',
-  },
-  apartment: {
-    location: 'Vračar',
-    price: 350,
-  },
-  score: 85,
-};
+import { useState, useRef, useEffect } from 'react';
+import { useChatStore } from '../../src/stores/chatStore';
+import { useAuthStore } from '../../src/stores/authStore';
+import { useMatchStore } from '../../src/stores/matchStore';
+import { useSocket } from '../../src/services/socket';
+import type { Message, Match } from '../../src/types';
 
 export default function ChatScreen() {
-  const { matchId } = useLocalSearchParams();
-  const [messages, setMessages] = useState(MOCK_MESSAGES);
+  const { matchId } = useLocalSearchParams<{ matchId: string }>();
   const [inputText, setInputText] = useState('');
   const flatListRef = useRef<FlatList>(null);
 
-  const sendMessage = () => {
-    if (!inputText.trim()) return;
+  const { user } = useAuthStore();
+  const { conversations, fetchMessages, sendMessage: sendMessageToStore, isLoading } = useChatStore();
+  const { matches, fetchMatch } = useMatchStore();
+  const { joinMatch, leaveMatch, sendTypingStart, sendTypingStop } = useSocket();
 
-    const newMessage = {
-      id: Date.now().toString(),
-      text: inputText,
-      senderId: 'me',
-      timestamp: new Date().toLocaleTimeString('sr-RS', {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
+  const messages = (matchId && conversations[matchId]) || [];
+  const currentMatch = matches.find((m) => m.id === matchId);
+  const [isTyping, setIsTyping] = useState(false);
+
+  // Load messages and join match room
+  useEffect(() => {
+    if (!matchId) return;
+
+    // Fetch match details if not already loaded
+    if (!currentMatch) {
+      fetchMatch(matchId);
+    }
+
+    // Fetch messages from API
+    fetchMessages(matchId);
+
+    // Join Socket.io room for real-time updates
+    joinMatch(matchId);
+
+    // Cleanup: leave room when unmounting
+    return () => {
+      leaveMatch(matchId);
+      if (isTyping) {
+        sendTypingStop(matchId);
+      }
     };
+  }, [matchId]);
 
-    setMessages([...messages, newMessage]);
+  // Scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messages.length > 0) {
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [messages.length]);
+
+  const sendMessage = async () => {
+    if (!inputText.trim() || !matchId) return;
+
+    const messageContent = inputText;
     setInputText('');
+
+    // Stop typing indicator
+    if (isTyping) {
+      sendTypingStop(matchId);
+      setIsTyping(false);
+    }
+
+    // Send via store (which calls API)
+    await sendMessageToStore(matchId, messageContent);
 
     // Scroll to bottom
     setTimeout(() => {
@@ -77,22 +85,54 @@ export default function ChatScreen() {
     }, 100);
   };
 
-  const renderMessage = ({ item }: { item: typeof MOCK_MESSAGES[0] }) => {
-    const isMe = item.senderId === 'me';
+  const handleTextChange = (text: string) => {
+    setInputText(text);
+
+    if (!matchId) return;
+
+    // Send typing indicator
+    if (text.length > 0 && !isTyping) {
+      sendTypingStart(matchId);
+      setIsTyping(true);
+    } else if (text.length === 0 && isTyping) {
+      sendTypingStop(matchId);
+      setIsTyping(false);
+    }
+  };
+
+  const renderMessage = ({ item }: { item: Message }) => {
+    const isMe = item.senderId === user?.id;
 
     return (
       <View style={[styles.messageContainer, isMe && styles.messageContainerMe]}>
         <View style={[styles.messageBubble, isMe ? styles.messageBubbleMe : styles.messageBubbleOther]}>
           <Text style={[styles.messageText, isMe && styles.messageTextMe]}>
-            {item.text}
+            {item.content}
           </Text>
           <Text style={[styles.timestamp, isMe && styles.timestampMe]}>
-            {item.timestamp}
+            {new Date(item.createdAt).toLocaleTimeString('sr-RS', {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
           </Text>
         </View>
       </View>
     );
   };
+
+  if (isLoading && messages.length === 0) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color="#FF6B6B" />
+      </View>
+    );
+  }
+
+  // Get the other user's name and match details
+  const otherUserName = currentMatch?.otherUser?.name || 'Korisnik';
+  const matchScore = currentMatch?.score || 0;
+  const itemPrice = currentMatch?.item?.price;
+  const itemLocation = currentMatch?.item?.location?.city;
 
   return (
     <KeyboardAvoidingView
@@ -109,20 +149,24 @@ export default function ChatScreen() {
         <View style={styles.headerInfo}>
           <View style={styles.headerAvatar}>
             <Text style={styles.headerAvatarText}>
-              {MOCK_MATCH.otherUser.name.charAt(0)}
+              {otherUserName.charAt(0).toUpperCase()}
             </Text>
           </View>
           <View>
-            <Text style={styles.headerName}>{MOCK_MATCH.otherUser.name}</Text>
-            <Text style={styles.headerSubtitle}>
-              🏠 {MOCK_MATCH.apartment.location} • {MOCK_MATCH.apartment.price}€
-            </Text>
+            <Text style={styles.headerName}>{otherUserName}</Text>
+            {itemLocation && itemPrice && (
+              <Text style={styles.headerSubtitle}>
+                🏠 {itemLocation} • {itemPrice}€
+              </Text>
+            )}
           </View>
         </View>
 
-        <View style={styles.scoreBadge}>
-          <Text style={styles.scoreText}>{MOCK_MATCH.score}%</Text>
-        </View>
+        {matchScore > 0 && (
+          <View style={styles.scoreBadge}>
+            <Text style={styles.scoreText}>{Math.round(matchScore)}%</Text>
+          </View>
+        )}
       </View>
 
       {/* Messages */}
@@ -143,7 +187,7 @@ export default function ChatScreen() {
           placeholder="Napiši poruku..."
           placeholderTextColor="#999"
           value={inputText}
-          onChangeText={setInputText}
+          onChangeText={handleTextChange}
           multiline
           maxLength={500}
         />
@@ -163,6 +207,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  centered: {
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   header: {
     flexDirection: 'row',
