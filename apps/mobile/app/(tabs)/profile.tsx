@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useAuthStore } from '../../src/stores/authStore';
 
@@ -14,37 +14,78 @@ export default function ProfileScreen() {
     router.push('/edit-profile');
   };
 
-  if (!user) {
-    return (
-      <View style={styles.container}>
-        <Text>Nisi prijavljen</Text>
-      </View>
-    );
-  }
+  const handleAddApartment = () => {
+    router.push('/add-apartment');
+  };
+
+  // Fake user data for demo
+  const displayUser = user || {
+    name: 'Marko Petrović',
+    email: 'marko@example.com',
+    role: 'provider',
+    images: ['https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400'],
+    attributes: [
+      { name: 'Organizovan', confidence: 0.92 },
+      { name: 'Tih', confidence: 0.85 },
+      { name: 'Uredan', confidence: 0.88 },
+    ],
+    preferences: {
+      budget: { min: 300, max: 500 },
+      smoker: false,
+      pets: true,
+      cleanliness: 4,
+      sleepSchedule: 'early',
+    },
+  };
+
+  const isProvider = displayUser.role === 'provider';
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      {/* Header with Logo */}
       <View style={styles.header}>
-        <View style={styles.avatar}>
-          <Text style={styles.avatarText}>{user.name.charAt(0)}</Text>
+        <Image
+          source={require('../../assets/mali logo.png')}
+          style={styles.headerLogo}
+          resizeMode="contain"
+        />
+      </View>
+
+      {/* Profile Section */}
+      <View style={styles.profileSection}>
+        {/* Avatar */}
+        <View style={styles.avatarContainer}>
+          {displayUser.images?.[0] ? (
+            <Image source={{ uri: displayUser.images[0] }} style={styles.avatar} />
+          ) : (
+            <View style={[styles.avatar, styles.avatarPlaceholder]}>
+              <Text style={styles.avatarText}>{displayUser.name.charAt(0)}</Text>
+            </View>
+          )}
+          <View style={styles.avatarBorder} />
         </View>
-        <Text style={styles.name}>{user.name}</Text>
-        <Text style={styles.email}>{user.email}</Text>
+
+        {/* Name & Email */}
+        <Text style={styles.name}>{displayUser.name}</Text>
+        <Text style={styles.email}>{displayUser.email}</Text>
+
+        {/* Role Badge */}
         <View style={styles.roleBadge}>
           <Text style={styles.roleText}>
-            {user.role === 'seeker' ? '🔍 Tražim stan' : '🏠 Imam stan'}
+            {isProvider ? '🏠 Nudim stan' : '🔍 Tražim stan'}
           </Text>
         </View>
       </View>
 
-      {/* AI Traits */}
+      {/* AI Vibes Section */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>✨ AI Osobine</Text>
-        <View style={styles.traitsContainer}>
-          {user.attributes?.map((attr, index) => (
-            <View key={index} style={styles.traitBadge}>
-              <Text style={styles.traitName}>{attr.name}</Text>
-              <Text style={styles.traitConfidence}>
+        <Text style={styles.sectionTitle}>Moji Vajbovi</Text>
+        <View style={styles.vibesContainer}>
+          {displayUser.attributes?.map((attr, index) => (
+            <View key={index} style={styles.vibeBadge}>
+              <Text style={styles.vibeIcon}>✱</Text>
+              <Text style={styles.vibeName}>{attr.name}</Text>
+              <Text style={styles.vibeConfidence}>
                 {Math.round(attr.confidence * 100)}%
               </Text>
             </View>
@@ -52,48 +93,90 @@ export default function ProfileScreen() {
         </View>
       </View>
 
-      {/* Preferences (only for seekers) */}
-      {user.role === 'seeker' && user.preferences && (
+      {/* Preferences Section (only for seekers) */}
+      {!isProvider && displayUser.preferences && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📋 Moje preference</Text>
+          <Text style={styles.sectionTitle}>Moje Preference</Text>
 
-          <View style={styles.preferenceRow}>
-            <Text style={styles.preferenceLabel}>Budžet:</Text>
-            <Text style={styles.preferenceValue}>
-              {user.preferences.budget.min}€ - {user.preferences.budget.max}€
-            </Text>
-          </View>
+          <View style={styles.preferenceCard}>
+            <View style={styles.preferenceRow}>
+              <Text style={styles.preferenceIcon}>💰</Text>
+              <Text style={styles.preferenceLabel}>Budžet</Text>
+              <Text style={styles.preferenceValue}>
+                {displayUser.preferences.budget.min}€ - {displayUser.preferences.budget.max}€
+              </Text>
+            </View>
 
-          <View style={styles.preferenceRow}>
-            <Text style={styles.preferenceLabel}>Pušač:</Text>
-            <Text style={styles.preferenceValue}>
-              {user.preferences.smoker ? 'Da' : 'Ne'}
-            </Text>
-          </View>
+            <View style={styles.divider} />
 
-          <View style={styles.preferenceRow}>
-            <Text style={styles.preferenceLabel}>Ljubimci:</Text>
-            <Text style={styles.preferenceValue}>
-              {user.preferences.pets ? 'Da' : 'Ne'}
-            </Text>
-          </View>
+            <View style={styles.preferenceRow}>
+              <Text style={styles.preferenceIcon}>🚬</Text>
+              <Text style={styles.preferenceLabel}>Pušač</Text>
+              <Text style={styles.preferenceValue}>
+                {displayUser.preferences.smoker ? 'Da' : 'Ne'}
+              </Text>
+            </View>
 
-          <View style={styles.preferenceRow}>
-            <Text style={styles.preferenceLabel}>Urednost:</Text>
-            <Text style={styles.preferenceValue}>
-              {'★'.repeat(user.preferences.cleanliness)}
-              {'☆'.repeat(5 - user.preferences.cleanliness)}
-            </Text>
-          </View>
+            <View style={styles.divider} />
 
-          <View style={styles.preferenceRow}>
-            <Text style={styles.preferenceLabel}>Raspored:</Text>
-            <Text style={styles.preferenceValue}>
-              {user.preferences.sleepSchedule === 'early'
-                ? '🌅 Ranoranioc'
-                : '🌙 Noćna ptica'}
-            </Text>
+            <View style={styles.preferenceRow}>
+              <Text style={styles.preferenceIcon}>🐕</Text>
+              <Text style={styles.preferenceLabel}>Ljubimci</Text>
+              <Text style={styles.preferenceValue}>
+                {displayUser.preferences.pets ? 'Da' : 'Ne'}
+              </Text>
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.preferenceRow}>
+              <Text style={styles.preferenceIcon}>🧹</Text>
+              <Text style={styles.preferenceLabel}>Urednost</Text>
+              <View style={styles.starsContainer}>
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Text
+                    key={star}
+                    style={[
+                      styles.star,
+                      star <= displayUser.preferences.cleanliness && styles.starActive
+                    ]}
+                  >
+                    ★
+                  </Text>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.preferenceRow}>
+              <Text style={styles.preferenceIcon}>🌙</Text>
+              <Text style={styles.preferenceLabel}>Raspored</Text>
+              <Text style={styles.preferenceValue}>
+                {displayUser.preferences.sleepSchedule === 'early'
+                  ? 'Ranoranioc'
+                  : 'Noćna ptica'}
+              </Text>
+            </View>
           </View>
+        </View>
+      )}
+
+      {/* Provider Section - Add Apartment */}
+      {isProvider && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Moj Stan</Text>
+          <Pressable style={styles.addApartmentButton} onPress={handleAddApartment}>
+            <View style={styles.addApartmentIcon}>
+              <Text style={styles.addApartmentIconText}>+</Text>
+            </View>
+            <View style={styles.addApartmentContent}>
+              <Text style={styles.addApartmentTitle}>Dodaj novi stan</Text>
+              <Text style={styles.addApartmentSubtitle}>
+                Uploaduj slike i informacije o stanu
+              </Text>
+            </View>
+          </Pressable>
         </View>
       )}
 
@@ -107,6 +190,9 @@ export default function ProfileScreen() {
           <Text style={styles.logoutButtonText}>Odjavi se</Text>
         </Pressable>
       </View>
+
+      {/* Bottom spacing */}
+      <View style={{ height: 120 }} />
     </ScrollView>
   );
 }
@@ -116,116 +202,198 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
-  content: {
-    paddingBottom: 40,
-  },
   header: {
-    alignItems: 'center',
-    paddingTop: 60,
-    paddingBottom: 24,
-    backgroundColor: '#F8F8F8',
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    paddingBottom: 8,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
   },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#FF6B6B',
-    justifyContent: 'center',
+  headerLogo: {
+    width: 40,
+    height: 40,
+  },
+  profileSection: {
     alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingBottom: 24,
+  },
+  avatarContainer: {
+    position: 'relative',
     marginBottom: 16,
   },
+  avatar: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+  },
+  avatarPlaceholder: {
+    backgroundColor: '#E991D9',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   avatarText: {
-    fontSize: 40,
+    fontSize: 48,
     fontWeight: 'bold',
     color: '#fff',
+  },
+  avatarBorder: {
+    position: 'absolute',
+    top: -4,
+    left: -4,
+    right: -4,
+    bottom: -4,
+    borderRadius: 64,
+    borderWidth: 3,
+    borderColor: '#E991D9',
   },
   name: {
     fontSize: 28,
     fontWeight: 'bold',
     color: '#1a1a1a',
+    marginBottom: 4,
   },
   email: {
     fontSize: 14,
     color: '#666',
-    marginTop: 4,
+    marginBottom: 12,
   },
   roleBadge: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    marginTop: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    backgroundColor: '#F8E8F5',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 24,
   },
   roleText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#1a1a1a',
   },
   section: {
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    paddingHorizontal: 20,
+    marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: 'bold',
     color: '#1a1a1a',
     marginBottom: 16,
   },
-  traitsContainer: {
+  vibesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 10,
   },
-  traitBadge: {
+  vibeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0F8FF',
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    borderRadius: 16,
+    backgroundColor: '#F8E8F5',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
     gap: 8,
   },
-  traitName: {
+  vibeIcon: {
     fontSize: 14,
-    fontWeight: '500',
+    color: '#E991D9',
+  },
+  vibeName: {
+    fontSize: 14,
+    fontWeight: '600',
     color: '#1a1a1a',
   },
-  traitConfidence: {
+  vibeConfidence: {
     fontSize: 12,
-    color: '#FF6B6B',
+    color: '#E991D9',
     fontWeight: '500',
+  },
+  preferenceCard: {
+    backgroundColor: '#F8F8F8',
+    borderRadius: 20,
+    padding: 20,
   },
   preferenceRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F8F8F8',
+    paddingVertical: 8,
+  },
+  preferenceIcon: {
+    fontSize: 20,
+    marginRight: 12,
+    width: 28,
   },
   preferenceLabel: {
+    flex: 1,
     fontSize: 16,
     color: '#666',
   },
   preferenceValue: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#1a1a1a',
   },
-  actions: {
+  starsContainer: {
+    flexDirection: 'row',
+    gap: 2,
+  },
+  star: {
+    fontSize: 18,
+    color: '#E0E0E0',
+  },
+  starActive: {
+    color: '#E991D9',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E8E8E8',
+    marginVertical: 8,
+  },
+  addApartmentButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8F8F8',
+    borderRadius: 20,
     padding: 20,
+    borderWidth: 2,
+    borderColor: '#E991D9',
+    borderStyle: 'dashed',
+  },
+  addApartmentIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#E991D9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  addApartmentIconText: {
+    fontSize: 32,
+    color: '#fff',
+    fontWeight: '300',
+    marginTop: -2,
+  },
+  addApartmentContent: {
+    flex: 1,
+  },
+  addApartmentTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    marginBottom: 4,
+  },
+  addApartmentSubtitle: {
+    fontSize: 14,
+    color: '#666',
+  },
+  actions: {
+    paddingHorizontal: 20,
     gap: 12,
   },
   editButton: {
-    backgroundColor: '#FF6B6B',
-    padding: 16,
-    borderRadius: 12,
+    backgroundColor: '#E991D9',
+    paddingVertical: 16,
+    borderRadius: 30,
     alignItems: 'center',
   },
   editButtonText: {
@@ -234,13 +402,15 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   logoutButton: {
-    backgroundColor: '#F8F8F8',
-    padding: 16,
-    borderRadius: 12,
+    backgroundColor: '#fff',
+    paddingVertical: 14,
+    borderRadius: 30,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   logoutButtonText: {
-    color: '#FF6B6B',
+    color: '#E991D9',
     fontSize: 16,
     fontWeight: '600',
   },

@@ -1,97 +1,122 @@
-import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Pressable, ActivityIndicator, Image, ScrollView } from 'react-native';
 import { router } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useMatchStore } from '../../src/stores/matchStore';
 import { useAuthStore } from '../../src/stores/authStore';
+import { CompatibilityModal } from '../../src/components/CompatibilityModal';
 import type { Match } from '../../src/types';
+
+// Fake data for demo
+const FAKE_MATCHES = [
+  {
+    id: '1',
+    name: 'Marko',
+    image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400',
+    vibe: 'Student',
+    matchScore: 95,
+    vibes: ['Student', 'Tih'],
+    aiInsight: 'Vaši vajbovi su sinhronizovani! Oboje cenite privatnost i tišinu.',
+  },
+  {
+    id: '2',
+    name: 'Ana',
+    image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400',
+    vibe: 'Uredan',
+    matchScore: 92,
+    vibes: ['Uredan', 'Organizovan'],
+    aiInsight: 'Oboje volite čist i organizovan prostor. Savršen match!',
+  },
+  {
+    id: '3',
+    name: 'Ivan',
+    image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
+    vibe: 'Gamer',
+    matchScore: 89,
+    vibes: ['Gamer', 'Noćna ptica'],
+    aiInsight: 'Imate slične navike - oboje ste noćne ptice i volite gaming.',
+  },
+];
 
 export default function MatchesScreen() {
   const { user } = useAuthStore();
   const { matches, isLoading, fetchMatches, acceptMatch, rejectMatch } = useMatchStore();
+  const [selectedMatch, setSelectedMatch] = useState<typeof FAKE_MATCHES[0] | null>(null);
+  const [showCompatibilityModal, setShowCompatibilityModal] = useState(false);
 
   useEffect(() => {
     fetchMatches();
   }, []);
 
-  const handleMatchPress = (matchId: string) => {
-    router.push(`/chat/${matchId}`);
+  // Use fake data if no real matches
+  const displayMatches = matches.length > 0 ? matches : FAKE_MATCHES;
+  const isProvider = user?.role === 'provider';
+
+  const handleMatchPress = (match: typeof FAKE_MATCHES[0]) => {
+    setSelectedMatch(match);
+    setShowCompatibilityModal(true);
   };
 
-  const handleAccept = async (matchId: string) => {
-    const success = await acceptMatch(matchId);
-    if (success) {
-      router.push(`/chat/${matchId}`);
+  const handleAccept = async () => {
+    if (selectedMatch) {
+      setShowCompatibilityModal(false);
+      // Navigate to chat
+      router.push(`/chat/${selectedMatch.id}`);
     }
   };
 
-  const handleReject = async (matchId: string) => {
-    await rejectMatch(matchId);
+  const handleReject = async () => {
+    setShowCompatibilityModal(false);
+    setSelectedMatch(null);
   };
 
-  const renderMatch = ({ item }: { item: Match }) => {
-    const isProvider = user?.role === 'provider';
-    const otherUser = isProvider ? item.seeker : item.provider;
-    const isPending = item.status === 'pending';
+  const handleViewAllRequests = () => {
+    // Could navigate to a full requests screen
+  };
 
+  const renderMatchCard = ({ item }: { item: typeof FAKE_MATCHES[0] }) => {
     return (
-      <Pressable style={styles.matchCard} onPress={() => !isPending && handleMatchPress(item.id)}>
-        <View style={styles.matchImage}>
-          {item.apartment.images?.[0] ? (
-            <Image source={{ uri: item.apartment.images[0] }} style={styles.matchImageImg} />
+      <Pressable style={styles.matchCard} onPress={() => handleMatchPress(item)}>
+        {/* Avatar */}
+        <View style={styles.avatarContainer}>
+          {item.image ? (
+            <Image source={{ uri: item.image }} style={styles.avatar} />
           ) : (
-            <Text style={styles.matchImageText}>🏠</Text>
+            <View style={[styles.avatar, styles.avatarPlaceholder]}>
+              <Text style={styles.avatarText}>{item.name.charAt(0)}</Text>
+            </View>
           )}
         </View>
 
-        <View style={styles.matchContent}>
-          <View style={styles.matchHeader}>
-            <Text style={styles.matchPrice}>{item.apartment.price}€/mes</Text>
-            <View style={[styles.statusBadge, item.status === 'accepted' ? styles.statusAccepted : styles.statusPending]}>
-              <Text style={styles.statusText}>
-                {item.status === 'accepted' ? 'Prihvaćeno' : 'Na čekanju'}
-              </Text>
-            </View>
+        {/* Info */}
+        <View style={styles.matchInfo}>
+          <Text style={styles.matchName}>{item.name}</Text>
+          <View style={styles.vibeBadge}>
+            <Text style={styles.vibeIcon}>✱</Text>
+            <Text style={styles.vibeText}>#{item.vibe}</Text>
           </View>
+        </View>
 
-          <Text style={styles.matchLocation}>📍 {item.apartment.location.city}</Text>
-          <Text style={styles.matchProvider}>
-            {isProvider ? `Tražilac: ${otherUser.name}` : `Vlasnik: ${otherUser.name}`}
-          </Text>
-
-          <View style={styles.scoreBadge}>
-            <Text style={styles.scoreText}>{item.score.total}% Match</Text>
-          </View>
-
-          <View style={styles.reasonsContainer}>
-            {item.score.reasons.slice(0, 2).map((reason, index) => (
-              <Text key={index} style={styles.reason}>✓ {reason}</Text>
-            ))}
-          </View>
-
-          {isProvider && isPending && (
-            <View style={styles.actionButtons}>
-              <Pressable style={styles.rejectButton} onPress={() => handleReject(item.id)}>
-                <Text style={styles.rejectButtonText}>Odbij</Text>
-              </Pressable>
-              <Pressable style={styles.acceptButton} onPress={() => handleAccept(item.id)}>
-                <Text style={styles.acceptButtonText}>Prihvati</Text>
-              </Pressable>
-            </View>
-          )}
+        {/* Match Score */}
+        <View style={styles.matchScoreBadge}>
+          <Text style={styles.matchScoreText}>{item.matchScore}% Match</Text>
         </View>
       </Pressable>
     );
   };
 
-  if (isLoading && matches.length === 0) {
+  if (isLoading && matches.length === 0 && FAKE_MATCHES.length === 0) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Tvoji Matchevi</Text>
+          <Image
+            source={require('../../assets/mali logo.png')}
+            style={styles.headerLogo}
+            resizeMode="contain"
+          />
         </View>
-        <View style={styles.emptyContainer}>
-          <ActivityIndicator size="large" color="#FF6B6B" />
-          <Text style={styles.emptyTitle}>Učitavanje...</Text>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#E991D9" />
+          <Text style={styles.loadingText}>Učitavanje...</Text>
         </View>
       </View>
     );
@@ -99,24 +124,51 @@ export default function MatchesScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Tvoji Matchevi</Text>
-        <Text style={styles.headerSubtitle}>{matches.length} matcheva</Text>
+        <Image
+          source={require('../../assets/mali logo.png')}
+          style={styles.headerLogo}
+          resizeMode="contain"
+        />
       </View>
 
-      <FlatList
-        data={matches}
-        renderItem={renderMatch}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyEmoji}>💔</Text>
-            <Text style={styles.emptyTitle}>Nema matcheva</Text>
-            <Text style={styles.emptySubtitle}>Nastavi da swajpuješ!</Text>
-          </View>
-        }
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* Title */}
+        <Text style={styles.title}>Zainteresovani{'\n'}Cimeri</Text>
+
+        {/* Match Cards */}
+        <View style={styles.matchesList}>
+          {displayMatches.map((match, index) => (
+            <View key={match.id || index}>
+              {renderMatchCard({ item: match as typeof FAKE_MATCHES[0] })}
+            </View>
+          ))}
+        </View>
+
+        {/* View All Button */}
+        <Pressable style={styles.viewAllButton} onPress={handleViewAllRequests}>
+          <Text style={styles.viewAllButtonText}>Pogledaj sve zahteve</Text>
+        </Pressable>
+
+        {/* Bottom spacing */}
+        <View style={{ height: 100 }} />
+      </ScrollView>
+
+      {/* Compatibility Modal */}
+      <CompatibilityModal
+        visible={showCompatibilityModal}
+        onClose={() => setShowCompatibilityModal(false)}
+        onAccept={handleAccept}
+        onReject={handleReject}
+        matchData={selectedMatch ? {
+          name: selectedMatch.name,
+          image: selectedMatch.image,
+          vibes: selectedMatch.vibes,
+          matchScore: selectedMatch.matchScore,
+          aiInsight: selectedMatch.aiInsight,
+        } : null}
+        currentUserVibes={user?.attributes?.map(a => a.name) || ['Noćna ptica', 'Gaming']}
       />
     </View>
   );
@@ -125,161 +177,127 @@ export default function MatchesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: '#fff',
   },
   header: {
     paddingTop: 50,
     paddingHorizontal: 20,
     paddingBottom: 16,
-    backgroundColor: '#fff',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
   },
-  headerTitle: {
-    fontSize: 28,
+  headerLogo: {
+    width: 40,
+    height: 40,
+  },
+  content: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  title: {
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#1a1a1a',
+    lineHeight: 40,
+    marginBottom: 24,
   },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  listContent: {
-    padding: 16,
-    gap: 16,
+  matchesList: {
+    gap: 12,
   },
   matchCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    overflow: 'hidden',
     flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowRadius: 8,
     elevation: 2,
   },
-  matchImage: {
-    width: 100,
-    backgroundColor: '#E8E8E8',
+  avatarContainer: {
+    marginRight: 16,
+  },
+  avatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+  },
+  avatarPlaceholder: {
+    backgroundColor: '#E991D9',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  matchImageImg: {
-    width: '100%',
-    height: '100%',
-  },
-  matchImageText: {
-    fontSize: 40,
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 12,
-  },
-  acceptButton: {
-    flex: 1,
-    backgroundColor: '#4CAF50',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  acceptButtonText: {
+  avatarText: {
+    fontSize: 22,
+    fontWeight: 'bold',
     color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
   },
-  rejectButton: {
+  matchInfo: {
     flex: 1,
-    backgroundColor: '#F0F0F0',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: 'center',
   },
-  rejectButtonText: {
-    color: '#666',
+  matchName: {
+    fontSize: 18,
     fontWeight: '600',
-    fontSize: 14,
+    color: '#1a1a1a',
+    marginBottom: 6,
   },
-  matchContent: {
-    flex: 1,
-    padding: 16,
-  },
-  matchHeader: {
+  vibeBadge: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    backgroundColor: '#F8E8F5',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    alignSelf: 'flex-start',
+    gap: 4,
   },
-  matchPrice: {
-    fontSize: 20,
-    fontWeight: 'bold',
+  vibeIcon: {
+    fontSize: 12,
+    color: '#E991D9',
+  },
+  vibeText: {
+    fontSize: 13,
+    fontWeight: '500',
     color: '#1a1a1a',
   },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+  matchScoreBadge: {
+    backgroundColor: '#F8E8F5',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E991D9',
   },
-  statusAccepted: {
-    backgroundColor: '#E8F5E9',
-  },
-  statusPending: {
-    backgroundColor: '#FFF3E0',
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  matchLocation: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-  },
-  matchProvider: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 2,
-  },
-  scoreBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#FFF0F0',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginTop: 8,
-  },
-  scoreText: {
-    fontSize: 12,
+  matchScoreText: {
+    fontSize: 13,
     fontWeight: '600',
-    color: '#FF6B6B',
+    color: '#1a1a1a',
   },
-  reasonsContainer: {
-    marginTop: 8,
+  viewAllButton: {
+    backgroundColor: '#E991D9',
+    paddingVertical: 18,
+    borderRadius: 30,
+    alignItems: 'center',
+    marginTop: 24,
   },
-  reason: {
-    fontSize: 12,
-    color: '#4CAF50',
-    marginTop: 2,
+  viewAllButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
-  emptyContainer: {
+  loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 100,
   },
-  emptyEmoji: {
-    fontSize: 64,
-    marginBottom: 16,
-  },
-  emptyTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-  },
-  emptySubtitle: {
+  loadingText: {
     fontSize: 16,
     color: '#666',
-    marginTop: 8,
+    marginTop: 12,
   },
 });
