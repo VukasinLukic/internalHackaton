@@ -5,6 +5,7 @@ import { feedRoutes } from './feed.routes';
 import { interactionRoutes } from './interaction.routes';
 import { matchRoutes } from './match.routes';
 import { messageRoutes } from './message.routes';
+import { visionRoutes } from './vision.routes';
 
 export async function registerRoutes(fastify: FastifyInstance) {
   // Health check
@@ -21,5 +22,6 @@ export async function registerRoutes(fastify: FastifyInstance) {
     api.register(interactionRoutes, { prefix: '/interactions' });
     api.register(matchRoutes, { prefix: '/matches' });
     api.register(messageRoutes, { prefix: '/messages' });
+    api.register(visionRoutes, { prefix: '/vision' });
   }, { prefix: '/api/v1' });
 }

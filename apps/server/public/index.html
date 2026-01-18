@@ -6,6 +6,22 @@
     <title>ZZZimeri Intelligence - Vision Test</title>
     <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
     <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: rgba(102, 126, 234, 0.05);
+            --bg-glass: rgba(255, 255, 255, 0.8);
+            --text-primary: #1d1d1f;
+            --text-secondary: #6c757d;
+            --border-light: rgba(102, 126, 234, 0.15);
+            --shadow: rgba(102, 126, 234, 0.1);
+            --blue: #4facfe;
+            --green: #43e97b;
+            --pink: #fa709a;
+            --yellow: #feca57;
+            --orange: #ff6348;
+            --purple: #a29bfe;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -14,8 +30,8 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', 'Segoe UI', sans-serif;
-            background: #000;
-            color: #fff;
+            background: #ffffff;
+            color: var(--text-primary);
             overflow-x: hidden;
             min-height: 100vh;
             position: relative;
@@ -28,9 +44,10 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle at 20% 30%, rgba(10, 132, 255, 0.08) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 70%, rgba(255, 55, 95, 0.06) 0%, transparent 50%),
-                        radial-gradient(circle at 50% 50%, rgba(30, 30, 30, 0.4) 0%, transparent 100%);
+            background:
+                radial-gradient(circle at 20% 30%, rgba(79, 172, 254, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(250, 112, 154, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(162, 155, 254, 0.05) 0%, transparent 60%);
             pointer-events: none;
             z-index: 0;
         }
@@ -45,14 +62,8 @@
         }
 
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         /* Header */
@@ -62,29 +73,24 @@
             align-items: center;
             margin-bottom: 40px;
             padding: 24px 32px;
-            background: rgba(30, 30, 30, 0.6);
+            background: var(--bg-glass);
             backdrop-filter: blur(40px);
             border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-light);
+            box-shadow: 0 8px 32px var(--shadow);
             animation: slideDown 0.6s ease-out;
         }
 
         @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .logo {
             font-size: 28px;
             font-weight: 700;
             letter-spacing: -0.5px;
-            background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.7) 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -95,32 +101,26 @@
             align-items: center;
             gap: 12px;
             padding: 12px 24px;
-            background: rgba(48, 209, 88, 0.1);
-            border: 1px solid rgba(48, 209, 88, 0.3);
+            background: rgba(67, 233, 123, 0.2);
+            border: 1px solid rgba(67, 233, 123, 0.4);
             border-radius: 100px;
             font-size: 14px;
             font-weight: 500;
-            color: #30D158;
+            color: var(--green);
         }
 
         .status-dot {
             width: 8px;
             height: 8px;
-            background: #30D158;
+            background: var(--green);
             border-radius: 50%;
             animation: pulse 2s ease-in-out infinite;
             box-shadow: 0 0 20px rgba(48, 209, 88, 0.6);
         }
 
         @keyframes pulse {
-            0%, 100% {
-                opacity: 1;
-                transform: scale(1);
-            }
-            50% {
-                opacity: 0.6;
-                transform: scale(1.2);
-            }
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.2); }
         }
 
         /* Grid Layout */
@@ -132,28 +132,24 @@
         }
 
         @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(40px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .glass-card {
-            background: rgba(30, 30, 30, 0.6);
+            background: var(--bg-glass);
             backdrop-filter: blur(40px);
             border-radius: 24px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-light);
             padding: 32px;
+            box-shadow: 0 8px 32px var(--shadow);
             transition: all 0.3s ease;
         }
 
         .glass-card:hover {
-            border-color: rgba(255, 255, 255, 0.2);
+            border-color: rgba(0, 0, 0, 0.12);
             transform: translateY(-2px);
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.12);
         }
 
         /* Left Column - Input Panel */
@@ -175,16 +171,16 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
-            color: rgba(255, 255, 255, 0.6);
+            color: var(--text-secondary);
         }
 
         .input-field {
             width: 100%;
             padding: 16px 20px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            background: white;
+            border: 2px solid var(--border-light);
             border-radius: 14px;
-            color: #fff;
+            color: var(--text-primary);
             font-size: 16px;
             font-family: inherit;
             outline: none;
@@ -192,15 +188,15 @@
         }
 
         .input-field:focus {
-            border-color: #0A84FF;
+            border-color: var(--blue);
             box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.1);
         }
 
         .image-preview {
             width: 100%;
             height: 400px;
-            background: rgba(0, 0, 0, 0.4);
-            border: 2px dashed rgba(255, 255, 255, 0.2);
+            background: rgba(102, 126, 234, 0.02);
+            border: 2px dashed var(--border-light);
             border-radius: 20px;
             overflow: hidden;
             display: flex;
@@ -212,7 +208,9 @@
 
         .image-preview.has-image {
             border-style: solid;
-            border-color: rgba(10, 132, 255, 0.3);
+            border-color: var(--blue);
+            background: white;
+            box-shadow: 0 0 30px rgba(79, 172, 254, 0.3);
         }
 
         .image-preview img {
@@ -228,7 +226,7 @@
         }
 
         .preview-placeholder {
-            color: rgba(255, 255, 255, 0.3);
+            color: var(--text-secondary);
             font-size: 14px;
             font-weight: 500;
         }
@@ -236,15 +234,15 @@
         .analyze-button {
             width: 100%;
             padding: 20px;
-            background: linear-gradient(135deg, #0A84FF 0%, #0066CC 100%);
+            background: linear-gradient(135deg, var(--pink) 0%, var(--orange) 100%);
             border: none;
             border-radius: 16px;
-            color: #fff;
+            color: white;
             font-size: 18px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 10px 30px rgba(10, 132, 255, 0.3);
+            box-shadow: 0 10px 40px rgba(250, 112, 154, 0.4);
             position: relative;
             overflow: hidden;
         }
@@ -266,7 +264,7 @@
 
         .analyze-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 15px 40px rgba(10, 132, 255, 0.4);
+            box-shadow: 0 15px 50px rgba(250, 112, 154, 0.6);
         }
 
         .analyze-button:active {
@@ -289,7 +287,7 @@
             width: 16px;
             height: 16px;
             border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top-color: #fff;
+            border-top-color: white;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
             margin-right: 8px;
@@ -317,7 +315,7 @@
             font-size: 16px;
             font-weight: 600;
             margin-bottom: 20px;
-            color: rgba(255, 255, 255, 0.8);
+            color: var(--text-primary);
             display: flex;
             align-items: center;
             gap: 10px;
@@ -327,13 +325,15 @@
             content: '';
             width: 4px;
             height: 20px;
-            background: linear-gradient(180deg, #0A84FF, #FF375F);
+            background: linear-gradient(180deg, var(--blue), var(--pink));
             border-radius: 2px;
+            box-shadow: 0 0 10px rgba(79, 172, 254, 0.5);
         }
 
         .logs-container {
             flex: 1;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(102, 126, 234, 0.03);
+            border: 1px solid var(--border-light);
             border-radius: 16px;
             padding: 20px;
             overflow-y: auto;
@@ -347,12 +347,12 @@
         }
 
         .logs-container::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.02);
             border-radius: 4px;
         }
 
         .logs-container::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.15);
             border-radius: 4px;
         }
 
@@ -366,18 +366,12 @@
         }
 
         @keyframes slideInLeft {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
         }
 
         .log-timestamp {
-            color: rgba(255, 255, 255, 0.4);
+            color: var(--text-secondary);
             min-width: 80px;
         }
 
@@ -385,10 +379,13 @@
             flex: 1;
         }
 
-        .log-info { color: #0A84FF; }
-        .log-ai { color: #FF375F; }
-        .log-success { color: #30D158; }
-        .log-warning { color: #FFD60A; }
+        .log-info { color: var(--blue); }
+        .log-ai { color: var(--pink); }
+        .log-success { color: var(--green); }
+        .log-warning { color: var(--yellow); }
+        .log-match-high { color: var(--green); font-weight: 600; }
+        .log-match-partial { color: var(--orange); font-weight: 600; }
+        .log-match-none { color: var(--pink); font-weight: 600; }
 
         /* Graph Panel */
         .graph-panel {
@@ -399,7 +396,8 @@
 
         .graph-container {
             flex: 1;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(102, 126, 234, 0.03);
+            border: 1px solid var(--border-light);
             border-radius: 16px;
             overflow: hidden;
             position: relative;
@@ -427,16 +425,16 @@
         }
 
         ::-webkit-scrollbar-track {
-            background: #000;
+            background: var(--bg-secondary);
         }
 
         ::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.15);
             border-radius: 6px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.25);
         }
     </style>
 </head>
@@ -456,23 +454,22 @@
             <!-- Left Column - Input Panel -->
             <div class="glass-card input-panel">
                 <div class="input-group">
-                    <label class="input-label">Image Source</label>
+                    <label class="input-label">Image URL</label>
                     <input
                         type="text"
                         id="imageUrl"
                         class="input-field"
-                        placeholder="Enter image URL..."
-                        value="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800"
+                        placeholder="Paste image URL here..."
                     >
                 </div>
 
                 <div class="image-preview" id="imagePreview">
-                    <span class="preview-placeholder">Image preview will appear here</span>
+                    <span class="preview-placeholder">Enter image URL above</span>
                     <img id="previewImage" alt="Preview" />
                 </div>
 
                 <button class="analyze-button" id="analyzeBtn">
-                    <span class="button-text">Analyze Vibe</span>
+                    <span class="button-text">Analyze with AI</span>
                 </button>
             </div>
 
@@ -501,7 +498,85 @@
     </div>
 
     <script>
-        // Graph initialization
+        // ==================== DATA MODELS ====================
+
+        // Lazar's Preferences (VISUAL ONLY - for test dashboard)
+        // Mobile app will use full preferences including price, location, etc.
+        const lazarPreferences = {
+            style: {
+                preferred: ['Minimalist', 'Modern', 'Urban', 'Industrial', 'Contemporary'],
+                weight: 10
+            },
+            vibe: {
+                preferred: ['Bright', 'Cozy', 'Luxurious', 'Spacious'],
+                weight: 8
+            },
+            attributes: {
+                preferred: [
+                    'Natural Light', 'Large Windows', 'Open Plan',
+                    'Modern Furniture', 'High Ceilings', 'Balcony',
+                    'Fireplace', 'Hardwood Floors'
+                ],
+                weight: 5
+            }
+        };
+
+        // API endpoint
+        const API_ENDPOINT = '/api/v1/vision/analyze-apartment';
+
+        // ==================== MATCHING ALGORITHM (VISUAL ONLY) ====================
+        // This test dashboard matches ONLY on visual attributes from the image
+        // Mobile app will use full matching including price, location, etc.
+
+        function calculateMatchScore(apartment, preferences) {
+            let totalScore = 0;
+            let maxScore = 0;
+            const matches = [];
+            const mismatches = [];
+
+            // Style Match (HIGH PRIORITY)
+            maxScore += preferences.style.weight;
+            if (preferences.style.preferred.includes(apartment.style)) {
+                totalScore += preferences.style.weight;
+                matches.push({ category: 'Style', value: apartment.style, weight: preferences.style.weight, priority: 'HIGH' });
+            } else {
+                mismatches.push({ category: 'Style', value: apartment.style, weight: preferences.style.weight });
+            }
+
+            // Vibe Match (HIGH PRIORITY)
+            maxScore += preferences.vibe.weight;
+            if (preferences.vibe.preferred.includes(apartment.vibe)) {
+                totalScore += preferences.vibe.weight;
+                matches.push({ category: 'Vibe', value: apartment.vibe, weight: preferences.vibe.weight, priority: 'HIGH' });
+            } else {
+                mismatches.push({ category: 'Vibe', value: apartment.vibe, weight: preferences.vibe.weight });
+            }
+
+            // Visual Attributes Match (MEDIUM PRIORITY)
+            if (apartment.attributes && apartment.attributes.length > 0) {
+                apartment.attributes.forEach(attr => {
+                    if (preferences.attributes.preferred.includes(attr)) {
+                        totalScore += preferences.attributes.weight;
+                        maxScore += preferences.attributes.weight;
+                        matches.push({ category: 'Feature', value: attr, weight: preferences.attributes.weight, priority: 'MEDIUM' });
+                    }
+                });
+            }
+
+            const percentage = maxScore > 0 ? Math.round((totalScore / maxScore) * 100) : 0;
+
+            return {
+                percentage,
+                totalScore,
+                maxScore,
+                matches,
+                mismatches,
+                level: percentage >= 70 ? 'HIGH' : percentage >= 40 ? 'PARTIAL' : 'NONE'
+            };
+        }
+
+        // ==================== GRAPH SETUP ====================
+
         let nodes = new vis.DataSet([]);
         let edges = new vis.DataSet([]);
 
@@ -510,16 +585,14 @@
         const options = {
             nodes: {
                 shape: 'dot',
-                size: 20,
                 font: {
                     size: 14,
-                    color: '#ffffff',
+                    color: '#1d1d1f',
                     face: '-apple-system, BlinkMacSystemFont, SF Pro Display'
                 },
                 borderWidth: 2,
                 shadow: {
                     enabled: true,
-                    color: 'rgba(10, 132, 255, 0.5)',
                     size: 10,
                     x: 0,
                     y: 0
@@ -529,7 +602,6 @@
                 width: 2,
                 shadow: {
                     enabled: true,
-                    color: 'rgba(48, 209, 88, 0.3)',
                     size: 5
                 },
                 smooth: {
@@ -556,7 +628,8 @@
 
         const network = new vis.Network(container, data, options);
 
-        // Logging utility
+        // ==================== LOGGING ====================
+
         let logCounter = 0;
         function addLog(message, type = 'info') {
             const logsContainer = document.getElementById('logsContainer');
@@ -576,12 +649,14 @@
             logCounter++;
         }
 
-        // Image preview handler
+        // ==================== IMAGE PREVIEW ====================
+
         const imageUrlInput = document.getElementById('imageUrl');
         const imagePreview = document.getElementById('imagePreview');
         const previewImage = document.getElementById('previewImage');
         const placeholder = imagePreview.querySelector('.preview-placeholder');
 
+        // Listen to URL input changes
         imageUrlInput.addEventListener('input', (e) => {
             const url = e.target.value.trim();
             if (url) {
@@ -595,6 +670,7 @@
                     previewImage.classList.remove('loaded');
                     placeholder.style.display = 'block';
                     imagePreview.classList.remove('has-image');
+                    addLog('❌ Failed to load image', 'warning');
                 };
             } else {
                 previewImage.classList.remove('loaded');
@@ -603,12 +679,8 @@
             }
         });
 
-        // Trigger initial image load
-        if (imageUrlInput.value) {
-            imageUrlInput.dispatchEvent(new Event('input'));
-        }
+        // ==================== ANALYSIS SIMULATION ====================
 
-        // Analysis simulation
         const analyzeBtn = document.getElementById('analyzeBtn');
         let isAnalyzing = false;
 
@@ -623,122 +695,246 @@
 
             isAnalyzing = true;
             analyzeBtn.disabled = true;
-            analyzeBtn.innerHTML = '<span class="spinner"></span><span class="button-text">Processing...</span>';
+            analyzeBtn.innerHTML = '<span class="spinner"></span><span class="button-text">Analyzing...</span>';
 
             // Clear previous graph
             nodes.clear();
             edges.clear();
 
-            await sleep(500);
+            await sleep(300);
 
             // Step 1: Add user node
-            addLog('🔵 Initializing analysis session...', 'info');
-            await sleep(800);
+            addLog('🔵 Initializing AI analysis session...', 'info');
+            await sleep(500);
 
             nodes.add({
                 id: 'user',
                 label: 'Lazar\n(Seeker)',
                 color: {
-                    background: '#0A84FF',
-                    border: '#0066CC',
-                    highlight: { background: '#0A84FF', border: '#ffffff' }
+                    background: '#a29bfe',
+                    border: '#6c5ce7',
+                    highlight: { background: '#a29bfe', border: '#ffffff' }
                 },
-                size: 30
+                size: 35,
+                font: { color: '#ffffff' }
             });
 
             addLog('🔗 Connecting to Gemini Vision API...', 'info');
-            await sleep(1200);
+            await sleep(800);
 
-            // Step 2: Extract vectors
-            addLog('�� Extracting semantic vectors from image...', 'ai');
-            await sleep(1500);
+            // Step 2: Call Real AI API
+            addLog('🧠 Sending image to Gemini for analysis...', 'ai');
 
-            addLog('📊 Processing multimodal embeddings...', 'ai');
-            await sleep(1000);
+            let currentApartment;
+            try {
+                const response = await fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ imageUrl })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'API request failed');
+                }
+
+                const data = await response.json();
+                currentApartment = data.analysis;
+
+                addLog('✅ AI analysis complete!', 'success');
+                await sleep(500);
+
+                if (currentApartment.description) {
+                    addLog(`📝 AI says: "${currentApartment.description}"`, 'ai');
+                    await sleep(500);
+                }
+
+            } catch (error) {
+                console.error('API Error:', error);
+                addLog(`❌ API Error: ${error.message}`, 'warning');
+                addLog('⚠ Make sure GEMINI_API_KEY is set in .env file', 'warning');
+
+                // Re-enable button
+                analyzeBtn.disabled = false;
+                analyzeBtn.innerHTML = '<span class="button-text">Try Again</span>';
+                isAnalyzing = false;
+                return;
+            }
+
+            await sleep(500);
 
             // Step 3: Add apartment node
             nodes.add({
                 id: 'apartment',
-                label: 'Modern Apartment',
+                label: currentApartment.name || 'Property',
                 color: {
-                    background: 'rgba(255, 255, 255, 0.9)',
-                    border: '#cccccc',
-                    highlight: { background: '#ffffff', border: '#0A84FF' }
+                    background: 'rgba(255, 255, 255, 0.95)',
+                    border: '#4facfe',
+                    highlight: { background: '#ffffff', border: '#fa709a' }
                 },
-                size: 35,
+                size: 40,
                 image: imageUrl,
-                shape: 'circularImage'
+                shape: 'circularImage',
+                borderWidth: 3
             });
 
-            addLog('🏠 Item detected: Modern Apartment', 'success');
+            addLog(`🏠 ${currentApartment.propertyType || 'Property'} detected: ${currentApartment.name}`, 'success');
             await sleep(800);
 
-            // Step 4: Add tag nodes
-            const tags = [
-                { id: 'tag1', label: 'Minimalist', pref: true },
-                { id: 'tag2', label: 'Urban', pref: true },
-                { id: 'tag3', label: 'Bright', pref: true },
-                { id: 'tag4', label: 'Spacious', pref: false },
-                { id: 'tag5', label: 'Modern', pref: true }
-            ];
+            // Step 4: Calculate Match
+            addLog('🔍 Running weighted matching algorithm...', 'ai');
+            await sleep(1000);
 
-            addLog('🏷 Analyzing visual attributes...', 'ai');
-            await sleep(600);
+            const matchResult = calculateMatchScore(currentApartment, lazarPreferences);
 
-            for (const tag of tags) {
+            // Step 5: Log matching process
+            addLog('📋 Analyzing visual attributes...', 'info');
+            await sleep(500);
+
+            // Log high priority matches (Style & Vibe)
+            for (const match of matchResult.matches.filter(m => m.priority === 'HIGH')) {
+                addLog(`✅ ${match.category}: ${match.value} (Weight: ${match.weight})`, 'success');
+                await sleep(300);
+            }
+
+            // Add critical nodes (Location, Price, Style)
+            const criticalMatches = matchResult.matches.filter(m => m.priority === 'HIGH');
+
+            for (let i = 0; i < criticalMatches.length; i++) {
+                const match = criticalMatches[i];
+                const nodeId = `critical-${i}`;
+
                 nodes.add({
-                    id: tag.id,
-                    label: tag.label,
+                    id: nodeId,
+                    label: `${match.category}\n${match.value}`,
                     color: {
-                        background: '#FF375F',
-                        border: '#CC1744',
-                        highlight: { background: '#FF375F', border: '#ffffff' }
+                        background: '#30D158',
+                        border: '#20A048',
+                        highlight: { background: '#30D158', border: '#1d1d1f' }
                     },
-                    size: 15
+                    size: 25
                 });
 
                 edges.add({
                     from: 'apartment',
-                    to: tag.id,
-                    color: { color: 'rgba(255, 55, 95, 0.4)' },
-                    width: 1
+                    to: nodeId,
+                    color: { color: '#30D158', opacity: 0.6 },
+                    width: 4
+                });
+
+                edges.add({
+                    from: 'user',
+                    to: nodeId,
+                    color: { color: '#30D158', opacity: 0.8 },
+                    width: 4
+                });
+
+                await sleep(400);
+            }
+
+            await sleep(600);
+            addLog('🏷 Analyzing detected features...', 'info');
+            await sleep(400);
+
+            // Add medium priority nodes
+            const mediumMatches = matchResult.matches.filter(m => m.priority === 'MEDIUM');
+
+            for (let i = 0; i < mediumMatches.length; i++) {
+                const match = mediumMatches[i];
+                const nodeId = `medium-${i}`;
+
+                nodes.add({
+                    id: nodeId,
+                    label: match.value,
+                    color: {
+                        background: '#0A84FF',
+                        border: '#0066CC',
+                        highlight: { background: '#0A84FF', border: '#1d1d1f' }
+                    },
+                    size: 18
+                });
+
+                edges.add({
+                    from: 'apartment',
+                    to: nodeId,
+                    color: { color: '#0A84FF', opacity: 0.4 },
+                    width: 2
+                });
+
+                edges.add({
+                    from: 'user',
+                    to: nodeId,
+                    color: { color: '#0A84FF', opacity: 0.6 },
+                    width: 2
                 });
 
                 await sleep(300);
             }
 
-            addLog('✨ Tags extracted: Minimalist, Urban, Bright, Spacious, Modern', 'success');
-            await sleep(1000);
+            // Add low priority nodes
+            const lowMatches = matchResult.matches.filter(m => m.priority === 'LOW');
 
-            // Step 5: Match with user preferences
-            addLog('🔍 Matching with user preferences...', 'info');
-            await sleep(1000);
+            for (let i = 0; i < lowMatches.length; i++) {
+                const match = lowMatches[i];
+                const nodeId = `low-${i}`;
 
-            const matchingTags = tags.filter(t => t.pref);
+                nodes.add({
+                    id: nodeId,
+                    label: match.value,
+                    color: {
+                        background: '#86868b',
+                        border: '#666666',
+                        highlight: { background: '#86868b', border: '#1d1d1f' }
+                    },
+                    size: 12
+                });
 
-            for (const tag of matchingTags) {
+                edges.add({
+                    from: 'apartment',
+                    to: nodeId,
+                    color: { color: '#86868b', opacity: 0.3 },
+                    width: 1
+                });
+
                 edges.add({
                     from: 'user',
-                    to: tag.id,
-                    color: { color: '#30D158', opacity: 0.8 },
-                    width: 3,
-                    dashes: false
+                    to: nodeId,
+                    color: { color: '#86868b', opacity: 0.4 },
+                    width: 1
                 });
-                await sleep(400);
+
+                await sleep(200);
             }
 
             await sleep(800);
 
-            // Step 6: Calculate match score
-            const matchScore = Math.round((matchingTags.length / tags.length) * 100);
-            addLog(`💚 MATCH FOUND: ${matchScore}% compatibility`, 'success');
+            // Step 6: Final Match Score
+            addLog('🧮 Calculating weighted score...', 'ai');
+            await sleep(1000);
+
+            addLog(`📊 Total Score: ${matchResult.totalScore}/${matchResult.maxScore} points`, 'info');
             await sleep(500);
 
-            addLog(`✅ Analysis complete - ${matchingTags.length}/${tags.length} preferences matched`, 'success');
+            // Final result with color coding
+            if (matchResult.level === 'HIGH') {
+                addLog(`💚 HIGH MATCH: ${matchResult.percentage}% compatibility`, 'match-high');
+                addLog(`✨ Excellent match! ${matchResult.matches.length} preferences matched`, 'success');
+            } else if (matchResult.level === 'PARTIAL') {
+                addLog(`🧡 PARTIAL MATCH: ${matchResult.percentage}% compatibility`, 'match-partial');
+                addLog(`⚠ Moderate match - ${matchResult.matches.length} preferences matched, ${matchResult.mismatches.length} mismatched`, 'warning');
+            } else {
+                addLog(`💔 NO MATCH: ${matchResult.percentage}% compatibility`, 'match-none');
+                addLog(`❌ Poor match - Below threshold. Only ${matchResult.matches.length} preferences matched`, 'ai');
+            }
+
+            await sleep(500);
+            addLog(`✅ Analysis complete`, 'success');
 
             // Re-enable button
             analyzeBtn.disabled = false;
-            analyzeBtn.innerHTML = '<span class="button-text">Analyze Again</span>';
+            analyzeBtn.innerHTML = '<span class="button-text">Analyze Another Image</span>';
             isAnalyzing = false;
         });
 
@@ -746,9 +942,12 @@
             return new Promise(resolve => setTimeout(resolve, ms));
         }
 
-        // Initial system message
+        // ==================== INITIALIZATION ====================
+
         setTimeout(() => {
-            addLog('🚀 Vision AI engine ready', 'success');
+            addLog('🚀 Real-time Gemini Vision AI ready', 'success');
+            addLog('👁 Visual-only matching mode (Style, Vibe, Features)', 'info');
+            addLog('📝 Paste any image URL above to analyze', 'info');
         }, 1000);
     </script>
 </body>

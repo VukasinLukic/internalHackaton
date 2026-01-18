@@ -2,15 +2,10 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 class GeminiClient {
   private static instance: GeminiClient;
-  private genAI: GoogleGenerativeAI;
+  private genAI: GoogleGenerativeAI | null = null;
 
   private constructor() {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      console.warn('⚠️  GEMINI_API_KEY environment variable not set');
-      // Create instance anyway to avoid import errors, but it will fail on actual use
-    }
-    this.genAI = new GoogleGenerativeAI(apiKey || 'dummy-key');
+    // Don't initialize here - do it lazily when needed
   }
 
   static getInstance(): GeminiClient {
@@ -18,6 +13,17 @@ class GeminiClient {
       GeminiClient.instance = new GeminiClient();
     }
     return GeminiClient.instance;
+  }
+
+  private getClient(): GoogleGenerativeAI {
+    if (!this.genAI) {
+      const apiKey = process.env.GEMINI_API_KEY;
+      if (!apiKey) {
+        throw new Error('⚠️  GEMINI_API_KEY environment variable not set');
+      }
+      this.genAI = new GoogleGenerativeAI(apiKey);
+    }
+    return this.genAI;
   }
 
   /**
@@ -32,14 +38,12 @@ class GeminiClient {
     userPrompt: string,
     imageUrls: string[]
   ): Promise<string> {
-    if (!process.env.GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY environment variable not set. Cannot analyze images.');
-    }
-
     try {
-      // Use gemini-1.5-flash for vision tasks (faster and cheaper than pro)
-      const model = this.genAI.getGenerativeModel({
-        model: 'gemini-1.5-flash',
+      const genAI = this.getClient(); // Lazy load API key
+
+      // Use gemini-2.5-flash-lite for vision tasks (cheapest option)
+      const model = genAI.getGenerativeModel({
+        model: 'gemini-2.5-flash-lite',
         generationConfig: {
           temperature: 0.4,
           topP: 0.95,
