@@ -8,14 +8,14 @@ import { messageRoutes } from './message.routes';
 import { visionRoutes } from './vision.routes';
 
 export async function registerRoutes(fastify: FastifyInstance) {
-  // Health check
-  fastify.get('/health', async () => ({
-    status: 'ok',
-    timestamp: new Date().toISOString()
-  }));
-
   // API v1 routes
   fastify.register(async (api) => {
+    // Health check
+    api.get('/health', async () => ({
+      status: 'ok',
+      timestamp: new Date().toISOString()
+    }));
+
     api.register(userRoutes, { prefix: '/users' });
     api.register(itemRoutes, { prefix: '/items' });
     api.register(feedRoutes, { prefix: '/feed' });
