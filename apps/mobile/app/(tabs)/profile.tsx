@@ -18,25 +18,25 @@ export default function ProfileScreen() {
     router.push('/add-apartment');
   };
 
-  // Fake user data for demo
-  const displayUser = user || {
-    name: 'Marko Petrović',
-    email: 'marko@example.com',
-    role: 'provider',
-    images: ['https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400'],
-    attributes: [
-      { name: 'Organizovan', confidence: 0.92 },
-      { name: 'Tih', confidence: 0.85 },
-      { name: 'Uredan', confidence: 0.88 },
-    ],
-    preferences: {
-      budget: { min: 300, max: 500 },
-      smoker: false,
-      pets: true,
-      cleanliness: 4,
-      sleepSchedule: 'early',
-    },
-  };
+  // Use real user data only
+  const displayUser = user;
+
+  if (!displayUser) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Image
+            source={require('../../assets/mali logo.png')}
+            style={styles.headerLogo}
+            resizeMode="contain"
+          />
+        </View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text style={{ fontSize: 18, color: '#666' }}>Molimo prijavite se</Text>
+        </View>
+      </View>
+    );
+  }
 
   const isProvider = displayUser.role === 'provider';
 
@@ -96,68 +96,107 @@ export default function ProfileScreen() {
       {/* Preferences Section (only for seekers) */}
       {!isProvider && displayUser.preferences && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Moje Preference</Text>
+          <Text style={styles.sectionTitle}>Šta tražim</Text>
 
           <View style={styles.preferenceCard}>
+            {/* Budget */}
             <View style={styles.preferenceRow}>
               <Text style={styles.preferenceIcon}>💰</Text>
               <Text style={styles.preferenceLabel}>Budžet</Text>
               <Text style={styles.preferenceValue}>
-                {displayUser.preferences.budget.min}€ - {displayUser.preferences.budget.max}€
+                {typeof displayUser.preferences.budget === 'number'
+                  ? `${displayUser.preferences.budget}€`
+                  : `${displayUser.preferences.budget?.min}€ - ${displayUser.preferences.budget?.max}€`}
               </Text>
             </View>
 
-            <View style={styles.divider} />
+            {/* Vibe Tags */}
+            {displayUser.preferences.vibes && displayUser.preferences.vibes.length > 0 && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.preferenceColumn}>
+                  <View style={styles.preferenceRowHeader}>
+                    <Text style={styles.preferenceIcon}>✨</Text>
+                    <Text style={styles.preferenceLabel}>Moj Vibe</Text>
+                  </View>
+                  <View style={styles.vibesWrapper}>
+                    {displayUser.preferences.vibes.map((vibe, index) => (
+                      <View key={index} style={styles.vibeTag}>
+                        <Text style={styles.vibeTagText}>{vibe}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              </>
+            )}
 
-            <View style={styles.preferenceRow}>
-              <Text style={styles.preferenceIcon}>🚬</Text>
-              <Text style={styles.preferenceLabel}>Pušač</Text>
-              <Text style={styles.preferenceValue}>
-                {displayUser.preferences.smoker ? 'Da' : 'Ne'}
-              </Text>
-            </View>
-
-            <View style={styles.divider} />
-
-            <View style={styles.preferenceRow}>
-              <Text style={styles.preferenceIcon}>🐕</Text>
-              <Text style={styles.preferenceLabel}>Ljubimci</Text>
-              <Text style={styles.preferenceValue}>
-                {displayUser.preferences.pets ? 'Da' : 'Ne'}
-              </Text>
-            </View>
-
-            <View style={styles.divider} />
-
-            <View style={styles.preferenceRow}>
-              <Text style={styles.preferenceIcon}>🧹</Text>
-              <Text style={styles.preferenceLabel}>Urednost</Text>
-              <View style={styles.starsContainer}>
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Text
-                    key={star}
-                    style={[
-                      styles.star,
-                      star <= displayUser.preferences.cleanliness && styles.starActive
-                    ]}
-                  >
-                    ★
+            {/* Sleep Schedule */}
+            {displayUser.preferences.sleepSchedule && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.preferenceRow}>
+                  <Text style={styles.preferenceIcon}>
+                    {displayUser.preferences.sleepSchedule === 'early' ? '🌅' : '🌙'}
                   </Text>
-                ))}
-              </View>
-            </View>
+                  <Text style={styles.preferenceLabel}>Raspored</Text>
+                  <Text style={styles.preferenceValue}>
+                    {displayUser.preferences.sleepSchedule === 'early'
+                      ? 'Ranoranioc'
+                      : 'Noćna ptica'}
+                  </Text>
+                </View>
+              </>
+            )}
 
-            <View style={styles.divider} />
+            {/* Old preferences (if they exist) */}
+            {displayUser.preferences.smoker !== undefined && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.preferenceRow}>
+                  <Text style={styles.preferenceIcon}>🚬</Text>
+                  <Text style={styles.preferenceLabel}>Pušač</Text>
+                  <Text style={styles.preferenceValue}>
+                    {displayUser.preferences.smoker ? 'Da' : 'Ne'}
+                  </Text>
+                </View>
+              </>
+            )}
 
-            <View style={styles.preferenceRow}>
-              <Text style={styles.preferenceIcon}>🌙</Text>
-              <Text style={styles.preferenceLabel}>Raspored</Text>
-              <Text style={styles.preferenceValue}>
-                {displayUser.preferences.sleepSchedule === 'early'
-                  ? 'Ranoranioc'
-                  : 'Noćna ptica'}
-              </Text>
-            </View>
+            {displayUser.preferences.pets !== undefined && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.preferenceRow}>
+                  <Text style={styles.preferenceIcon}>🐕</Text>
+                  <Text style={styles.preferenceLabel}>Ljubimci</Text>
+                  <Text style={styles.preferenceValue}>
+                    {displayUser.preferences.pets ? 'Da' : 'Ne'}
+                  </Text>
+                </View>
+              </>
+            )}
+
+            {displayUser.preferences?.cleanliness && (
+              <>
+                <View style={styles.divider} />
+                <View style={styles.preferenceRow}>
+                  <Text style={styles.preferenceIcon}>🧹</Text>
+                  <Text style={styles.preferenceLabel}>Urednost</Text>
+                  <View style={styles.starsContainer}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Text
+                        key={star}
+                        style={[
+                          styles.star,
+                          star <= (displayUser.preferences?.cleanliness || 0) && styles.starActive
+                        ]}
+                      >
+                        ★
+                      </Text>
+                    ))}
+                  </View>
+                </View>
+              </>
+            )}
           </View>
         </View>
       )}
@@ -274,7 +313,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#1a1a1a',
     marginBottom: 16,
@@ -308,14 +347,48 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   preferenceCard: {
-    backgroundColor: '#F8F8F8',
+    backgroundColor: '#fff',
     borderRadius: 20,
     padding: 20,
+    borderWidth: 2,
+    borderColor: '#1a1a1a',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   preferenceRow: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
+  },
+  preferenceColumn: {
+    paddingVertical: 8,
+  },
+  preferenceRowHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  vibesWrapper: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginLeft: 40,
+  },
+  vibeTag: {
+    backgroundColor: '#E991D9',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#1a1a1a',
+  },
+  vibeTagText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1a1a1a',
   },
   preferenceIcon: {
     fontSize: 20,
@@ -392,25 +465,30 @@ const styles = StyleSheet.create({
   },
   editButton: {
     backgroundColor: '#E991D9',
-    paddingVertical: 16,
+    paddingVertical: 18,
     borderRadius: 30,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   editButtonText: {
-    color: '#fff',
-    fontSize: 16,
+    color: '#1a1a1a',
+    fontSize: 18,
     fontWeight: '600',
   },
   logoutButton: {
     backgroundColor: '#fff',
-    paddingVertical: 14,
+    paddingVertical: 16,
     borderRadius: 30,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderWidth: 2,
+    borderColor: '#1a1a1a',
   },
   logoutButtonText: {
-    color: '#E991D9',
+    color: '#1a1a1a',
     fontSize: 16,
     fontWeight: '600',
   },
