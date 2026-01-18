@@ -7,7 +7,8 @@ import {
   Neo4jUserRepository,
   Neo4jItemRepository,
   Neo4jInteractionRepository,
-  Neo4jMatchRepository
+  Neo4jMatchRepository,
+  Neo4jMessageRepository
 } from '../infrastructure/database/neo4j/repositories';
 
 // Services
@@ -41,6 +42,7 @@ class Container {
   public itemRepository!: Neo4jItemRepository;
   public interactionRepository!: Neo4jInteractionRepository;
   public matchRepository!: Neo4jMatchRepository;
+  public messageRepository!: Neo4jMessageRepository;
 
   // Services
   public visionService!: VisionService;
@@ -79,6 +81,7 @@ class Container {
     this.itemRepository = new Neo4jItemRepository();
     this.interactionRepository = new Neo4jInteractionRepository();
     this.matchRepository = new Neo4jMatchRepository();
+    this.messageRepository = new Neo4jMessageRepository();
 
     // Initialize services
     this.visionService = new VisionService(this.domainConfig);

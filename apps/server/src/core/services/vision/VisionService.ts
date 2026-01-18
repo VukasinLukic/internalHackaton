@@ -1,4 +1,4 @@
-import { openAIClient } from '../../../infrastructure/external-services/openai/OpenAIClient';
+import { geminiClient } from '../../../infrastructure/external-services/gemini/GeminiClient';
 import { DomainConfig } from '../../../config/domain.config';
 
 export interface ItemAnalysisResult {
@@ -22,7 +22,7 @@ export class VisionService {
 
     const userPrompt = userPromptTemplate.replace('{imageUrls}', imageUrls.join(', '));
 
-    const responseText = await openAIClient.analyzeImages(
+    const responseText = await geminiClient.analyzeImages(
       systemPrompt,
       userPrompt,
       imageUrls
@@ -49,7 +49,7 @@ export class VisionService {
       .replace('{imageUrls}', imageUrls.join(', '))
       .replace('{bio}', bio || 'No bio provided');
 
-    const responseText = await openAIClient.analyzeImages(
+    const responseText = await geminiClient.analyzeImages(
       systemPrompt,
       userPrompt,
       imageUrls

@@ -1,22 +1,28 @@
 import { FastifyInstance } from 'fastify';
 import { SendMessageDto } from '../dto';
-import { validateBody, authMiddleware, AuthenticatedRequest } from '../middleware';
+import { validateBody, authMiddleware } from '../middleware';
+import { messageController } from '../controllers';
 
 export async function messageRoutes(fastify: FastifyInstance) {
   // Send message
-  fastify.post('/', {
+  fastify.post<{
+    Body: any;
+  }>('/', {
     preHandler: [authMiddleware, validateBody(SendMessageDto)]
-  }, async (request, _reply) => {
-    const { userId } = request as AuthenticatedRequest;
-    // TODO: Legion implements
-    return { message: 'Send message - Legion implements', userId };
-  });
+  }, messageController.sendMessage.bind(messageController));
 
   // Get conversation
-  fastify.get('/:matchId', {
+  fastify.get<{
+    Params: { matchId: string };
+    Querystring: { limit?: number; offset?: number };
+  }>('/:matchId', {
     preHandler: [authMiddleware]
-  }, async (_request, _reply) => {
-    // TODO: Legion implements
-    return { message: 'Get messages - Legion implements' };
-  });
+  }, messageController.getMessages.bind(messageController));
+
+  // Mark message as read
+  fastify.patch<{
+    Params: { messageId: string };
+  }>('/:messageId/read', {
+    preHandler: [authMiddleware]
+  }, messageController.markAsRead.bind(messageController));
 }

@@ -1,23 +1,18 @@
 import { FastifyInstance } from 'fastify';
 import { SwipeDto } from '../dto';
-import { validateBody, authMiddleware, AuthenticatedRequest } from '../middleware';
+import { validateBody, authMiddleware } from '../middleware';
+import { interactionController } from '../controllers';
 
 export async function interactionRoutes(fastify: FastifyInstance) {
   // Record swipe
-  fastify.post('/swipe', {
+  fastify.post<{
+    Body: any;
+  }>('/swipe', {
     preHandler: [authMiddleware, validateBody(SwipeDto)]
-  }, async (request, _reply) => {
-    const { userId } = request as AuthenticatedRequest;
-    // TODO: Legion implements
-    return { message: 'Swipe - Legion implements', userId };
-  });
+  }, interactionController.recordSwipe.bind(interactionController));
 
   // Get swipe history
   fastify.get('/history', {
     preHandler: [authMiddleware]
-  }, async (request, _reply) => {
-    const { userId } = request as AuthenticatedRequest;
-    // TODO: Legion implements
-    return { message: 'History - Legion implements', userId };
-  });
+  }, interactionController.getHistory.bind(interactionController));
 }

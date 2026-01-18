@@ -1,29 +1,24 @@
 import { FastifyInstance } from 'fastify';
-import { authMiddleware, AuthenticatedRequest } from '../middleware';
+import { authMiddleware } from '../middleware';
+import { matchController } from '../controllers';
 
 export async function matchRoutes(fastify: FastifyInstance) {
   // Get user's matches
   fastify.get('/', {
     preHandler: [authMiddleware]
-  }, async (request, _reply) => {
-    const { userId } = request as AuthenticatedRequest;
-    // TODO: Legion implements
-    return { message: 'Get matches - Legion implements', userId };
-  });
+  }, matchController.getMatches.bind(matchController));
 
   // Accept match
-  fastify.post('/:matchId/accept', {
+  fastify.post<{
+    Params: { matchId: string };
+  }>('/:matchId/accept', {
     preHandler: [authMiddleware]
-  }, async (_request, _reply) => {
-    // TODO: Legion implements
-    return { message: 'Accept match - Legion implements' };
-  });
+  }, matchController.acceptMatch.bind(matchController));
 
   // Reject match
-  fastify.post('/:matchId/reject', {
+  fastify.post<{
+    Params: { matchId: string };
+  }>('/:matchId/reject', {
     preHandler: [authMiddleware]
-  }, async (_request, _reply) => {
-    // TODO: Legion implements
-    return { message: 'Reject match - Legion implements' };
-  });
+  }, matchController.rejectMatch.bind(matchController));
 }

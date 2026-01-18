@@ -1,10 +1,13 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import dotenv from 'dotenv';
+import { readFileSync } from 'fs';
+import { join } from 'path';
 import { neo4jConnection } from './infrastructure/database/neo4j/Neo4jConnection';
 import { loadDomainConfig } from './config/domains';
 import { registerRoutes } from './api/http/routes';
 import { errorHandler } from './api/http/middleware';
+import { socketManager } from './infrastructure/websocket';
 
 dotenv.config();
 
@@ -26,6 +29,12 @@ app.register(cors, { origin: true });
 // Error handler
 app.setErrorHandler(errorHandler);
 
+// Root route - serve dashboard
+app.get('/', async (request, reply) => {
+  const html = readFileSync(join(__dirname, '../public/index.html'), 'utf-8');
+  reply.type('text/html').send(html);
+});
+
 // Routes
 app.register(registerRoutes);
 
@@ -38,6 +47,9 @@ const start = async () => {
     const port = Number(process.env.PORT) || 3000;
     await app.listen({ port, host: '0.0.0.0' });
 
+    // Initialize Socket.io with HTTP server
+    socketManager.initialize(app.server);
+
     console.log('');
     console.log('🚀 ZZZimeri API Server');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -45,6 +57,7 @@ const start = async () => {
     console.log(`🌐 Server: http://localhost:${port}`);
     console.log(`📚 API:    http://localhost:${port}/api/v1`);
     console.log(`💚 Health: http://localhost:${port}/health`);
+    console.log(`🔌 Socket: http://localhost:${port}/socket.io`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('');
   } catch (err) {

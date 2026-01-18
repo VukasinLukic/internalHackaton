@@ -1,41 +1,38 @@
 import { FastifyInstance } from 'fastify';
 import { CreateItemDto, UpdateItemDto } from '../dto';
 import { validateBody, authMiddleware } from '../middleware';
+import { itemController } from '../controllers';
 
 export async function itemRoutes(fastify: FastifyInstance) {
   // Create item (apartment)
-  fastify.post('/', {
+  fastify.post<{
+    Body: any;
+  }>('/', {
     preHandler: [authMiddleware, validateBody(CreateItemDto)]
-  }, async (_request, _reply) => {
-    // TODO: Legion implements + AI analysis
-    return { message: 'Create item - Legion implements' };
-  });
+  }, itemController.createItem.bind(itemController));
 
   // Get item by ID
-  fastify.get('/:id', async (_request, _reply) => {
-    // TODO: Legion implements
-    return { message: 'Get item - Legion implements' };
-  });
+  fastify.get<{
+    Params: { id: string };
+  }>('/:id', itemController.getItem.bind(itemController));
 
   // Update item
-  fastify.patch('/:id', {
+  fastify.patch<{
+    Params: { id: string };
+    Body: any;
+  }>('/:id', {
     preHandler: [authMiddleware, validateBody(UpdateItemDto)]
-  }, async (_request, _reply) => {
-    // TODO: Legion implements
-    return { message: 'Update item - Legion implements' };
-  });
+  }, itemController.updateItem.bind(itemController));
 
   // Delete item
-  fastify.delete('/:id', {
+  fastify.delete<{
+    Params: { id: string };
+  }>('/:id', {
     preHandler: [authMiddleware]
-  }, async (_request, _reply) => {
-    // TODO: Legion implements
-    return { message: 'Delete item - Legion implements' };
-  });
+  }, itemController.deleteItem.bind(itemController));
 
   // Get provider's items
-  fastify.get('/provider/:providerId', async (_request, _reply) => {
-    // TODO: Legion implements
-    return { message: 'Get provider items - Legion implements' };
-  });
+  fastify.get<{
+    Params: { providerId: string };
+  }>('/provider/:providerId', itemController.getProviderItems.bind(itemController));
 }
