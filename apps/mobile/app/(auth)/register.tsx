@@ -1,14 +1,40 @@
 import { View, Text, StyleSheet, TextInput, Pressable, Image } from 'react-native';
 import { Link, router } from 'expo-router';
 import { useState } from 'react';
+import { useAuthStore } from '../../src/stores/authStore';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const { setOnboardingName } = useAuthStore();
 
   const handleRegister = () => {
     console.log('[REGISTER] 🎭 DEMO MODE - No backend needed!');
+
+    // Validate email contains @gmail.com
+    if (!email.toLowerCase().includes('@gmail.com')) {
+      alert('Email mora biti @gmail.com adresa');
+      return;
+    }
+
+    // Save name and email to onboarding state
+    setOnboardingName(name);
+
+    // Create demo user object with email
+    const demoUser = {
+      id: 'demo-user-id',
+      email: email,
+      name: name,
+      role: 'seeker' as const,
+      images: [],
+      attributes: [],
+      preferences: {},
+    };
+
+    // Store in auth state
+    useAuthStore.getState().updateUser(demoUser);
+
     // Hardcoded demo - go straight to onboarding
     router.replace('/(onboarding)/role-selection');
   };

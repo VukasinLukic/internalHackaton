@@ -8,6 +8,13 @@ export default function LoginScreen() {
 
   const handleLogin = () => {
     console.log('[LOGIN] 🎭 DEMO MODE - No backend needed!');
+
+    // Validate email contains @gmail.com
+    if (!email.toLowerCase().includes('@gmail.com')) {
+      alert('Email mora biti @gmail.com adresa');
+      return;
+    }
+
     // Hardcoded demo - just navigate to feed
     router.replace('/(tabs)/feed');
   };
