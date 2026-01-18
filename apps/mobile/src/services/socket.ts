@@ -1,9 +1,11 @@
 import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '../stores/authStore';
-import { useChatStore } from '../stores/chatStore';
 import type { Message } from '../types';
 
 const WS_URL = process.env.EXPO_PUBLIC_WS_URL || 'http://localhost:3000';
+
+// Lazy import to avoid circular dependency
+const getChatStore = () => require('../stores/chatStore').useChatStore;
 
 class ChatSocketService {
   private socket: Socket | null = null;
@@ -64,7 +66,7 @@ class ChatSocketService {
     this.socket.on('new_message', (message: Message) => {
       console.log('New message received:', message);
       if (message.matchId) {
-        useChatStore.getState().addMessage(message.matchId, message);
+        getChatStore().getState().addMessage(message.matchId, message);
       }
     });
 

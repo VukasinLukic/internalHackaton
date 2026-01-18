@@ -67,10 +67,10 @@ export class UserMapper {
       email: user.email,
       name: user.name,
       role: user.role,
-      bio: user.bio,
+      bio: user.bio || '',
       images: user.images || [],
       attributes: user.attributes || [],
-      clerkId: user.clerkId
+      clerkId: user.clerkId || null
     };
 
     if (user.preferences) {
