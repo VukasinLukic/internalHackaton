@@ -1,3 +1,7 @@
+console.log('🚀 [STARTUP] Initializing ZZZimeri Server...');
+console.log('🚀 [STARTUP] Node version:', process.version);
+console.log('🚀 [STARTUP] Working directory:', process.cwd());
+
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import dotenv from 'dotenv';
@@ -9,34 +13,54 @@ import { registerRoutes } from './api/http/routes';
 import { errorHandler } from './api/http/middleware';
 import { socketManager } from './infrastructure/websocket';
 
-dotenv.config();
+console.log('✅ [STARTUP] All imports loaded');
 
+console.log('🔧 [CONFIG] Loading .env file...');
+dotenv.config();
+console.log('✅ [CONFIG] Environment variables loaded');
+console.log('📝 [CONFIG] NODE_ENV:', process.env.NODE_ENV);
+console.log('📝 [CONFIG] PORT:', process.env.PORT);
+console.log('📝 [CONFIG] DOMAIN_TYPE:', process.env.DOMAIN_TYPE);
+
+console.log('🔧 [FASTIFY] Creating Fastify instance...');
 const app = Fastify({
   logger: {
     level: process.env.NODE_ENV === 'production' ? 'info' : 'debug'
   }
 });
+console.log('✅ [FASTIFY] Fastify instance created');
 
 // Load domain config
+console.log('🔧 [DOMAIN] Loading domain config...');
 const domainConfig = loadDomainConfig();
+console.log('✅ [DOMAIN] Domain config loaded:', domainConfig.type);
 
 // Make config available globally
+console.log('🔧 [FASTIFY] Decorating app with domainConfig...');
 app.decorate('domainConfig', domainConfig);
 
 // Plugins
+console.log('🔧 [CORS] Registering CORS plugin...');
 app.register(cors, { origin: true });
+console.log('✅ [CORS] CORS registered');
 
 // Error handler
+console.log('🔧 [ERROR] Setting error handler...');
 app.setErrorHandler(errorHandler);
+console.log('✅ [ERROR] Error handler set');
 
 // Root route - serve dashboard
+console.log('🔧 [ROUTES] Registering root route...');
 app.get('/', async (_request, reply) => {
   const html = readFileSync(join(__dirname, '../public/index.html'), 'utf-8');
   reply.type('text/html').send(html);
 });
+console.log('✅ [ROUTES] Root route registered');
 
 // Routes
+console.log('🔧 [ROUTES] Registering API routes...');
 app.register(registerRoutes);
+console.log('✅ [ROUTES] API routes registered');
 
 // Startup
 const start = async () => {
@@ -80,10 +104,16 @@ const start = async () => {
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
-  console.log('\nShutting down...');
+  console.log('\n🛑 [SHUTDOWN] Received SIGINT, shutting down gracefully...');
   await neo4jConnection.close();
   await app.close();
+  console.log('✅ [SHUTDOWN] Server closed');
   process.exit(0);
 });
 
-start();
+console.log('🔧 [MAIN] Calling start() function...');
+start().catch((err) => {
+  console.error('❌ [MAIN] Fatal error in start():');
+  console.error(err);
+  process.exit(1);
+});
