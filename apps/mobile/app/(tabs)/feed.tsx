@@ -323,7 +323,8 @@ export default function FeedScreen() {
   const handleSendMessage = () => {
     hideMatchModal();
     if (currentMatch) {
-      router.push(`/chat/${currentMatch.item.id}`);
+      // Use provider.id to chat with the correct person
+      router.push(`/chat/${currentMatch.provider.id}`);
     }
   };
 
@@ -428,7 +429,16 @@ export default function FeedScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Cards Container - Full screen, no header */}
+      {/* Header with centered logo */}
+      <View style={styles.header}>
+        <Image
+          source={require('../../assets/veliki logo.png')}
+          style={styles.headerLogo}
+          resizeMode="contain"
+        />
+      </View>
+
+      {/* Cards Container */}
       <View style={styles.cardsContainer}>
         {/* Next card (behind) */}
         {nextItemData && (
@@ -446,6 +456,7 @@ export default function FeedScreen() {
           item={currentItem}
           onSwipe={handleSwipe}
           onPress={handleCardPress}
+          onDetailsPress={handleCardPress}
           isFirst={true}
         />
       </View>
@@ -470,9 +481,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F8F8',
   },
   header: {
-    paddingTop: 50,
+    paddingTop: 55,
     paddingHorizontal: 20,
-    paddingBottom: 12,
+    paddingBottom: 16,
     backgroundColor: '#fff',
     flexDirection: 'row',
     justifyContent: 'center',
@@ -481,8 +492,8 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F0F0F0',
   },
   headerLogo: {
-    width: 140,
-    height: 36,
+    width: 180,
+    height: 48,
   },
   cardsContainer: {
     flex: 1,

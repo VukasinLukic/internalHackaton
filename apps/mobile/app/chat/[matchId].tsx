@@ -15,58 +15,28 @@ import { useState, useRef, useEffect } from 'react';
 import { useChatStore } from '../../src/stores/chatStore';
 import { useAuthStore } from '../../src/stores/authStore';
 import { useMatchStore } from '../../src/stores/matchStore';
+import { useFeedStore } from '../../src/stores/feedStore';
 import { useSocket } from '../../src/services/socket';
 import type { Message, Match } from '../../src/types';
-
-// Fake messages for demo
-const FAKE_MESSAGES: Message[] = [
-  {
-    id: '1',
-    matchId: 'demo',
-    senderId: 'other',
-    content: 'Hej! Video sam da smo match. 😊',
-    createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
-    isRead: true,
-  },
-  {
-    id: '2',
-    matchId: 'demo',
-    senderId: 'me',
-    content: 'Ćao Marko! Da, super! I ja obožavam ploče.',
-    createdAt: new Date(Date.now() - 1000 * 60 * 3).toISOString(),
-    isRead: true,
-  },
-  {
-    id: '3',
-    matchId: 'demo',
-    senderId: 'other',
-    content: 'Odlično! Imam dosta vinila kod kuće. Možda možemo da ih preslušamo jednom?',
-    createdAt: new Date(Date.now() - 1000 * 60 * 2).toISOString(),
-    isRead: true,
-  },
-  {
-    id: '4',
-    matchId: 'demo',
-    senderId: 'me',
-    content: 'Zvuči super! Kad si slobodan?',
-    createdAt: new Date(Date.now() - 1000 * 60 * 1).toISOString(),
-    isRead: true,
-  },
-];
 
 export default function ChatScreen() {
   const { matchId } = useLocalSearchParams<{ matchId: string }>();
   const [inputText, setInputText] = useState('');
+  const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const flatListRef = useRef<FlatList>(null);
 
   const { user } = useAuthStore();
   const { conversations, fetchMessages, sendMessage: sendMessageToStore, isLoading } = useChatStore();
   const { matches, fetchMatch } = useMatchStore();
+  const { feedItems } = useFeedStore();
   const { joinMatch, leaveMatch, sendTypingStart, sendTypingStop } = useSocket();
 
-  // Use fake messages if no real messages
+  // Find provider from feedItems using matchId (which is provider.id)
+  const providerFromFeed = feedItems.find(item => item.provider.id === matchId)?.provider;
+
+  // Use real messages from store, or local messages, start empty
   const realMessages = (matchId && conversations[matchId]) || [];
-  const messages = realMessages.length > 0 ? realMessages : FAKE_MESSAGES;
+  const messages = realMessages.length > 0 ? realMessages : localMessages;
 
   const currentMatch = matches.find((m) => m.id === matchId);
   const [isTyping, setIsTyping] = useState(false);
@@ -116,8 +86,25 @@ export default function ChatScreen() {
       setIsTyping(false);
     }
 
-    // Send via store (which calls API)
-    await sendMessageToStore(matchId, messageContent);
+    // Create local message for demo
+    const newMessage: Message = {
+      id: `local-${Date.now()}`,
+      matchId: matchId,
+      senderId: user?.id || 'me',
+      content: messageContent,
+      createdAt: new Date().toISOString(),
+      isRead: true,
+    };
+
+    // Add to local messages
+    setLocalMessages(prev => [...prev, newMessage]);
+
+    // Try to send via store (which calls API) - will fail silently in demo
+    try {
+      await sendMessageToStore(matchId, messageContent);
+    } catch (e) {
+      // Ignore API errors in demo mode
+    }
 
     // Scroll to bottom
     setTimeout(() => {
@@ -168,18 +155,24 @@ export default function ChatScreen() {
     );
   }
 
-  // Get the other user's name and match details - use fake data for demo
-  const otherUserName = currentMatch?.otherUser?.name || 'Marko';
-  const otherUserImage = currentMatch?.otherUser?.images?.[0] || 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400';
+  // Get the other user's name and match details - use provider from feed
+  const otherUserName = providerFromFeed?.name || currentMatch?.otherUser?.name || 'Korisnik';
+  const otherUserImage = providerFromFeed?.images?.[0] || currentMatch?.otherUser?.images?.[0] || 'https://i.pravatar.cc/150?img=1';
+  const otherUserAttrs = providerFromFeed?.attributes || currentMatch?.otherUser?.attributes || [];
 
   // Generate AI icebreaker based on match data
   const getIcebreaker = () => {
-    const otherUserAttrs = currentMatch?.otherUser?.attributes || [];
     if (otherUserAttrs.length > 0) {
       const attr = otherUserAttrs[0];
-      return `Pitaj ${otherUserName.split(' ')[0]}a o ${attr.name === 'Organizovan' ? 'njegovim organizacionim veštinama' : attr.name === 'Druželjubiv' ? 'njegovim hobijima' : attr.name === 'Tih' ? 'njegovom omiljenom mestu za opuštanje' : 'njegovoj kolekciji ploča'}!`;
+      const firstName = otherUserName.split(' ')[0];
+      if (attr.name === 'Organizovan') return `Pitaj ${firstName} o organizacionim veštinama!`;
+      if (attr.name === 'Druželjubiv') return `Pitaj ${firstName} o hobijima!`;
+      if (attr.name === 'Tih') return `Pitaj ${firstName} o omiljenom mestu za opuštanje!`;
+      if (attr.name === 'Komunikativan') return `Pitaj ${firstName} o interesovanjima!`;
+      if (attr.name === 'Pouzdan') return `Pitaj ${firstName} o iskustvu sa cimerima!`;
+      return `Pitaj ${firstName} o sebi!`;
     }
-    return `Pitaj ${otherUserName.split(' ')[0]}a o njegovoj kolekciji ploča!`;
+    return `Započni razgovor sa ${otherUserName.split(' ')[0]}!`;
   };
 
   return (
