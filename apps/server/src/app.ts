@@ -30,7 +30,7 @@ app.register(cors, { origin: true });
 app.setErrorHandler(errorHandler);
 
 // Root route - serve dashboard
-app.get('/', async (request, reply) => {
+app.get('/', async (_request, reply) => {
   const html = readFileSync(join(__dirname, '../public/index.html'), 'utf-8');
   reply.type('text/html').send(html);
 });
