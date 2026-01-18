@@ -51,7 +51,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="matches"
         options={{
-          title: isProvider ? 'Zahtevi' : 'Inbox',
+          title: isProvider ? 'Zahtevi' : 'Matchovi',
           tabBarIcon: ({ focused }) => <TabIcon name="matches" focused={focused} />,
         }}
       />
@@ -76,27 +76,27 @@ const styles = StyleSheet.create({
   tabBar: {
     backgroundColor: '#fff',
     borderTopWidth: 0,
-    height: 75,
-    paddingBottom: 20,
-    paddingTop: 10,
+    height: 80,
+    paddingBottom: 24,
+    paddingTop: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 15,
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 20,
   },
   tabBarLabel: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 11,
+    fontWeight: '600',
   },
   iconContainer: {
-    width: 40,
-    height: 30,
+    width: 44,
+    height: 32,
     justifyContent: 'center',
     alignItems: 'center',
   },
   icon: {
-    fontSize: 24,
+    fontSize: 26,
     opacity: 0.5,
   },
   iconActive: {

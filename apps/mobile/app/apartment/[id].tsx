@@ -1,59 +1,44 @@
 import { View, Text, StyleSheet, ScrollView, Pressable, Image, Dimensions } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
+import { useFeedStore } from '../../src/stores/feedStore';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-const MOCK_APARTMENT = {
-  id: '1',
-  price: 350,
-  size: 65,
-  bedrooms: 2,
-  bathrooms: 1,
-  location: {
-    address: 'Njegoševa 45',
-    city: 'Vračar, Beograd',
-  },
-  description:
-    'Lep i svetao stan u mirnoj ulici, blizu svih sadržaja. Potpuno namešten, spreman za useljenje. Ima centralno grejanje, klima uređaj, i brzi internet.',
-  images: ['https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800'],
-  attributes: [
-    { name: 'Modern', confidence: 0.95 },
-    { name: 'Svetao', confidence: 0.88 },
-    { name: 'Prostran', confidence: 0.92 },
-  ],
-  amenities: ['WiFi', 'Klima', 'Grejanje', 'Veš mašina', 'Parking'],
-  provider: {
-    id: 'u1',
-    name: 'Marko P.',
-    image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400',
-    attributes: [
-      { name: 'Organizovan', confidence: 0.92 },
-      { name: 'Tih', confidence: 0.85 },
-    ],
-  },
-  compatibility: {
-    total: 85,
-    reasons: [
-      'Matching vibes: Modern, Minimalist',
-      'U okviru tvog budžeta',
-      'Kompatibilan cimer: Tih, Organizovan',
-    ],
-  },
-};
+const DEFAULT_AMENITIES = ['WiFi', 'Klima', 'Grejanje', 'Veš mašina', 'Parking'];
 
 export default function ApartmentDetailsScreen() {
-  const { id } = useLocalSearchParams();
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { feedItems, swipe } = useFeedStore();
 
-  const handleLike = () => {
+  // Find the apartment from feedItems
+  const feedItem = feedItems.find(item => item.item.id === id);
+
+  // If not found, show empty state
+  if (!feedItem) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Pressable style={styles.backButton} onPress={() => router.back()}>
+          <Text style={styles.backButtonText}>←</Text>
+        </Pressable>
+        <Text style={{ fontSize: 18, color: '#666' }}>Apartman nije pronađen</Text>
+      </View>
+    );
+  }
+
+  const { item: apartment, provider, score } = feedItem;
+
+  const handleLike = async () => {
+    await swipe(apartment.id, 'like');
     router.back();
   };
 
-  const handleDislike = () => {
+  const handleDislike = async () => {
+    await swipe(apartment.id, 'dislike');
     router.back();
   };
 
   const handleChat = () => {
-    router.push(`/chat/${MOCK_APARTMENT.provider.id}`);
+    router.push(`/chat/${provider.id}`);
   };
 
   return (
@@ -61,8 +46,8 @@ export default function ApartmentDetailsScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Hero Image */}
         <View style={styles.imageContainer}>
-          {MOCK_APARTMENT.images[0] ? (
-            <Image source={{ uri: MOCK_APARTMENT.images[0] }} style={styles.heroImage} />
+          {apartment.images && apartment.images[0] ? (
+            <Image source={{ uri: apartment.images[0] }} style={styles.heroImage} />
           ) : (
             <View style={styles.imagePlaceholder}>
               <Text style={styles.imagePlaceholderText}>🏠</Text>
@@ -76,17 +61,17 @@ export default function ApartmentDetailsScreen() {
 
           {/* Match Score Badge */}
           <View style={styles.matchBadge}>
-            <Text style={styles.matchBadgeText}>{MOCK_APARTMENT.compatibility.total}% Match!</Text>
+            <Text style={styles.matchBadgeText}>{score.total}% Match!</Text>
           </View>
 
           {/* Provider Avatar overlapping */}
           <View style={styles.providerAvatarContainer}>
-            {MOCK_APARTMENT.provider.image ? (
-              <Image source={{ uri: MOCK_APARTMENT.provider.image }} style={styles.providerAvatar} />
+            {provider.images && provider.images[0] ? (
+              <Image source={{ uri: provider.images[0] }} style={styles.providerAvatar} />
             ) : (
               <View style={[styles.providerAvatar, styles.providerAvatarPlaceholder]}>
                 <Text style={styles.providerAvatarText}>
-                  {MOCK_APARTMENT.provider.name.charAt(0)}
+                  {provider.name.charAt(0)}
                 </Text>
               </View>
             )}
@@ -96,26 +81,26 @@ export default function ApartmentDetailsScreen() {
         <View style={styles.content}>
           {/* Price Section */}
           <View style={styles.priceSection}>
-            <Text style={styles.price}>{MOCK_APARTMENT.price} €</Text>
+            <Text style={styles.price}>{apartment.price} €</Text>
             <Text style={styles.priceLabel}>/mesec</Text>
           </View>
 
           {/* Location */}
           <View style={styles.locationRow}>
             <Text style={styles.locationIcon}>📍</Text>
-            <Text style={styles.locationText}>{MOCK_APARTMENT.location.city}</Text>
+            <Text style={styles.locationText}>{apartment.location.city}</Text>
           </View>
 
           {/* Quick Info Badges */}
           <View style={styles.quickInfoRow}>
             <View style={styles.infoBadge}>
-              <Text style={styles.infoBadgeText}>{MOCK_APARTMENT.size}m²</Text>
+              <Text style={styles.infoBadgeText}>{apartment.size}m²</Text>
             </View>
             <View style={styles.infoBadge}>
-              <Text style={styles.infoBadgeText}>{MOCK_APARTMENT.bedrooms} sobe</Text>
+              <Text style={styles.infoBadgeText}>{apartment.bedrooms} sobe</Text>
             </View>
             <View style={styles.infoBadge}>
-              <Text style={styles.infoBadgeText}>{MOCK_APARTMENT.bathrooms} kupatilo</Text>
+              <Text style={styles.infoBadgeText}>{apartment.bathrooms} kupatilo</Text>
             </View>
           </View>
 
@@ -125,7 +110,7 @@ export default function ApartmentDetailsScreen() {
               <Text style={styles.aiInsightIcon}>✱</Text>
             </View>
             <Text style={styles.aiInsightText}>
-              Ovaj stan je '<Text style={styles.aiInsightHighlight}>{MOCK_APARTMENT.attributes[0]?.name}</Text>', baš kao tvoj vajb!
+              Ovaj stan je '<Text style={styles.aiInsightHighlight}>{apartment.attributes?.[0]?.name || 'Udoban'}</Text>', baš kao tvoj vajb!
             </Text>
           </View>
 
@@ -133,7 +118,7 @@ export default function ApartmentDetailsScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Vajbovi stana</Text>
             <View style={styles.vibesContainer}>
-              {MOCK_APARTMENT.attributes.map((attr, index) => (
+              {(apartment.attributes || []).map((attr, index) => (
                 <View key={index} style={styles.vibeBadge}>
                   <Text style={styles.vibeIcon}>✱</Text>
                   <Text style={styles.vibeText}>#{attr.name}</Text>
@@ -148,14 +133,14 @@ export default function ApartmentDetailsScreen() {
           {/* Description */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Opis</Text>
-            <Text style={styles.description}>{MOCK_APARTMENT.description}</Text>
+            <Text style={styles.description}>{apartment.description || 'Nema opisa.'}</Text>
           </View>
 
           {/* Amenities */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Pogodnosti</Text>
             <View style={styles.amenitiesContainer}>
-              {MOCK_APARTMENT.amenities.map((amenity, index) => (
+              {DEFAULT_AMENITIES.map((amenity, index) => (
                 <View key={index} style={styles.amenityBadge}>
                   <Text style={styles.amenityText}>{amenity}</Text>
                 </View>
@@ -168,19 +153,19 @@ export default function ApartmentDetailsScreen() {
             <Text style={styles.sectionTitle}>O cimeru</Text>
             <View style={styles.providerCard}>
               <View style={styles.providerInfo}>
-                {MOCK_APARTMENT.provider.image ? (
-                  <Image source={{ uri: MOCK_APARTMENT.provider.image }} style={styles.providerCardAvatar} />
+                {provider.images && provider.images[0] ? (
+                  <Image source={{ uri: provider.images[0] }} style={styles.providerCardAvatar} />
                 ) : (
                   <View style={[styles.providerCardAvatar, styles.providerCardAvatarPlaceholder]}>
                     <Text style={styles.providerCardAvatarText}>
-                      {MOCK_APARTMENT.provider.name.charAt(0)}
+                      {provider.name.charAt(0)}
                     </Text>
                   </View>
                 )}
                 <View style={styles.providerDetails}>
-                  <Text style={styles.providerName}>{MOCK_APARTMENT.provider.name}</Text>
+                  <Text style={styles.providerName}>{provider.name}</Text>
                   <View style={styles.providerVibes}>
-                    {MOCK_APARTMENT.provider.attributes.map((attr, index) => (
+                    {(provider.attributes || []).map((attr, index) => (
                       <View key={index} style={styles.providerVibeBadge}>
                         <Text style={styles.providerVibeText}>#{attr.name}</Text>
                       </View>
@@ -198,7 +183,7 @@ export default function ApartmentDetailsScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Zašto ste kompatibilni</Text>
             <View style={styles.compatibilityCard}>
-              {MOCK_APARTMENT.compatibility.reasons.map((reason, index) => (
+              {(score.reasons || []).map((reason, index) => (
                 <View key={index} style={styles.compatibilityRow}>
                   <View style={styles.compatibilityCheck}>
                     <Text style={styles.compatibilityCheckText}>✓</Text>

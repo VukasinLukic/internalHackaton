@@ -13,16 +13,17 @@ import type { FeedItem, SwipeAction } from '../types';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
-const SWIPE_OUT_DURATION = 300;
+const SWIPE_OUT_DURATION = 250;
 
 interface SwipeCardProps {
   item: FeedItem;
   onSwipe: (action: SwipeAction) => void;
   onPress?: () => void;
+  onDetailsPress?: () => void;
   isFirst?: boolean;
 }
 
-export function SwipeCard({ item, onSwipe, onPress, isFirst = true }: SwipeCardProps) {
+export function SwipeCard({ item, onSwipe, onPress, onDetailsPress, isFirst = true }: SwipeCardProps) {
   const position = useRef(new Animated.ValueXY()).current;
   const scale = useRef(new Animated.Value(isFirst ? 1 : 0.95)).current;
 
@@ -34,7 +35,7 @@ export function SwipeCard({ item, onSwipe, onPress, isFirst = true }: SwipeCardP
 
   const rotate = position.x.interpolate({
     inputRange: [-SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2],
-    outputRange: ['-10deg', '0deg', '10deg'],
+    outputRange: ['-8deg', '0deg', '8deg'],
     extrapolate: 'clamp',
   });
 
@@ -54,7 +55,8 @@ export function SwipeCard({ item, onSwipe, onPress, isFirst = true }: SwipeCardP
     Animated.spring(position, {
       toValue: { x: 0, y: 0 },
       useNativeDriver: true,
-      friction: 5,
+      friction: 6,
+      tension: 100,
     }).start();
   };
 
@@ -66,29 +68,15 @@ export function SwipeCard({ item, onSwipe, onPress, isFirst = true }: SwipeCardP
       useNativeDriver: true,
     }).start(() => {
       onSwipe(direction === 'right' ? 'like' : 'dislike');
-      // Reset position for next card
       position.setValue({ x: 0, y: 0 });
     });
   };
 
+  // Disabled swipe gestures - only buttons work now
   const panResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => isFirst,
-      onMoveShouldSetPanResponder: (_, gesture) => {
-        return isFirst && Math.abs(gesture.dx) > 5;
-      },
-      onPanResponderMove: (_, gesture) => {
-        position.setValue({ x: gesture.dx, y: gesture.dy * 0.3 });
-      },
-      onPanResponderRelease: (_, gesture) => {
-        if (gesture.dx > SWIPE_THRESHOLD) {
-          swipeCard('right');
-        } else if (gesture.dx < -SWIPE_THRESHOLD) {
-          swipeCard('left');
-        } else {
-          resetPosition();
-        }
-      },
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: () => false,
     })
   ).current;
 
@@ -103,6 +91,7 @@ export function SwipeCard({ item, onSwipe, onPress, isFirst = true }: SwipeCardP
 
   const { item: apartment, provider, score } = item;
   const primaryVibe = apartment.attributes?.[0]?.name || 'Cozy';
+  const secondaryVibe = apartment.attributes?.[1]?.name || '';
 
   return (
     <Animated.View
@@ -110,14 +99,14 @@ export function SwipeCard({ item, onSwipe, onPress, isFirst = true }: SwipeCardP
       {...(isFirst ? panResponder.panHandlers : {})}
     >
       <Pressable style={styles.cardContent} onPress={onPress} disabled={!isFirst}>
-        {/* Logo */}
+        {/* Logo at top */}
         <Image
           source={require('../../assets/veliki logo.png')}
           style={styles.logo}
           resizeMode="contain"
         />
 
-        {/* Image Container */}
+        {/* Main Image */}
         <View style={styles.imageContainer}>
           {apartment.images && apartment.images.length > 0 ? (
             <Image
@@ -145,54 +134,41 @@ export function SwipeCard({ item, onSwipe, onPress, isFirst = true }: SwipeCardP
             </View>
           </Animated.View>
 
-          {/* Match Score Badge */}
+          {/* Match Score Badge - top right */}
           <View style={styles.scoreBadge}>
             <Text style={styles.scoreText}>{score.total}% Match!</Text>
           </View>
-
-          {/* Provider Avatar - Positioned at top of info section */}
-          <View style={styles.providerAvatarContainer}>
-            {provider.images && provider.images.length > 0 ? (
-              <Image source={{ uri: provider.images[0] }} style={styles.providerAvatar} />
-            ) : (
-              <View style={[styles.providerAvatar, styles.providerAvatarPlaceholder]}>
-                <Text style={styles.providerAvatarText}>{provider.name.charAt(0)}</Text>
-              </View>
-            )}
-          </View>
         </View>
 
-        {/* Card Info */}
-        <View style={styles.infoContainer}>
+        {/* Provider Avatar - overlapping image */}
+        <View style={styles.providerAvatarContainer}>
+          {provider.images && provider.images.length > 0 ? (
+            <Image source={{ uri: provider.images[0] }} style={styles.providerAvatar} />
+          ) : (
+            <View style={[styles.providerAvatar, styles.providerAvatarPlaceholder]}>
+              <Text style={styles.providerAvatarText}>{provider.name.charAt(0)}</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Info Section */}
+        <View style={styles.infoSection}>
           {/* Price */}
           <Text style={styles.price}>{apartment.price} €</Text>
 
           {/* Location */}
           <View style={styles.locationRow}>
             <Text style={styles.locationIcon}>📍</Text>
-            <Text style={styles.location}>{apartment.location.city}</Text>
+            <Text style={styles.locationText}>{apartment.location.city}</Text>
           </View>
 
-          {/* Apartment Details Badges */}
-          <View style={styles.detailsRow}>
-            <View style={styles.detailBadge}>
-              <Text style={styles.detailText}>{apartment.size}m²</Text>
-            </View>
-            <View style={styles.detailBadge}>
-              <Text style={styles.detailText}>{apartment.bedrooms} sobe</Text>
-            </View>
-            <View style={styles.detailBadge}>
-              <Text style={styles.detailText}>{apartment.bathrooms} kupatilo</Text>
-            </View>
-          </View>
-
-          {/* AI Insight Banner */}
+          {/* AI Insight Banner - Pink background */}
           <View style={styles.aiInsightBanner}>
             <View style={styles.aiInsightIconWrapper}>
               <Text style={styles.aiInsightIcon}>✱</Text>
             </View>
             <Text style={styles.aiInsightText}>
-              Ovaj stan je '<Text style={styles.aiInsightHighlight}>{primaryVibe}</Text>', baš kao tvoj vajb!
+              Ovaj stan je '<Text style={styles.aiInsightHighlight}>{primaryVibe}{secondaryVibe ? ` & ${secondaryVibe}` : ''}</Text>', baš{'\n'}kao tvoj vajb!
             </Text>
           </View>
 
@@ -200,6 +176,10 @@ export function SwipeCard({ item, onSwipe, onPress, isFirst = true }: SwipeCardP
           <View style={styles.actionButtons}>
             <Pressable style={styles.dislikeButton} onPress={() => swipeCard('left')}>
               <Text style={styles.dislikeButtonIcon}>✕</Text>
+            </Pressable>
+
+            <Pressable style={styles.detailsButton} onPress={onDetailsPress}>
+              <Text style={styles.detailsButtonText}>Detaljnije</Text>
             </Pressable>
 
             <Pressable style={styles.likeButton} onPress={() => swipeCard('right')}>
@@ -216,30 +196,33 @@ const styles = StyleSheet.create({
   card: {
     position: 'absolute',
     width: SCREEN_WIDTH - 32,
-    height: SCREEN_HEIGHT * 0.75,
+    height: SCREEN_HEIGHT * 0.78,
     backgroundColor: '#fff',
-    borderRadius: 24,
+    borderRadius: 28,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 10,
+    shadowOpacity: 0.12,
+    shadowRadius: 20,
+    elevation: 12,
     overflow: 'hidden',
   },
   cardContent: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 24,
   },
   logo: {
-    width: 120,
-    height: 32,
-    marginBottom: 8,
+    width: 100,
+    height: 28,
+    marginBottom: 16,
   },
   imageContainer: {
-    height: '45%',
-    position: 'relative',
-    borderRadius: 16,
+    flex: 1,
+    maxHeight: '50%',
+    borderRadius: 20,
     overflow: 'hidden',
+    position: 'relative',
   },
   image: {
     width: '100%',
@@ -271,48 +254,49 @@ const styles = StyleSheet.create({
   },
   overlayBadge: {
     backgroundColor: '#22C55E',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingHorizontal: 28,
+    paddingVertical: 14,
     borderRadius: 30,
   },
   overlayBadgeDislike: {
     backgroundColor: '#EF4444',
   },
   overlayBadgeText: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#fff',
   },
   scoreBadge: {
     position: 'absolute',
-    top: 12,
-    right: 12,
+    top: 14,
+    right: 14,
     backgroundColor: '#22C55E',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 18,
   },
   scoreText: {
     color: '#fff',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   providerAvatarContainer: {
     position: 'absolute',
-    bottom: -28,
-    left: 16,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    top: '50%',
+    left: 36,
+    marginTop: 20,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     borderWidth: 3,
-    borderColor: '#fff',
+    borderColor: '#E991D9',
     overflow: 'hidden',
     backgroundColor: '#fff',
-    elevation: 5,
+    elevation: 6,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
   },
   providerAvatar: {
     width: '100%',
@@ -324,76 +308,59 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   providerAvatarText: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
   },
-  infoContainer: {
-    flex: 1,
-    paddingTop: 36,
-    paddingHorizontal: 4,
+  infoSection: {
+    paddingTop: 44,
   },
   price: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: 'bold',
     color: '#1a1a1a',
   },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 2,
+    marginTop: 4,
+    marginBottom: 16,
   },
   locationIcon: {
-    fontSize: 14,
+    fontSize: 16,
     marginRight: 4,
   },
-  location: {
-    fontSize: 15,
+  locationText: {
+    fontSize: 16,
     color: '#666',
-  },
-  detailsRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginTop: 10,
-  },
-  detailBadge: {
-    backgroundColor: '#F5F5F5',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  detailText: {
-    fontSize: 12,
-    color: '#666',
-    fontWeight: '500',
   },
   aiInsightBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1a1a1a',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderRadius: 14,
-    marginTop: 12,
+    backgroundColor: '#FCE7F6',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: 18,
+    marginBottom: 20,
   },
   aiInsightIconWrapper: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#E991D9',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#1a1a1a',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
+    marginRight: 12,
   },
   aiInsightIcon: {
-    fontSize: 11,
+    fontSize: 14,
     color: '#fff',
   },
   aiInsightText: {
     flex: 1,
-    fontSize: 13,
-    color: '#fff',
-    lineHeight: 18,
+    fontSize: 14,
+    color: '#1a1a1a',
+    lineHeight: 20,
   },
   aiInsightHighlight: {
     fontWeight: 'bold',
@@ -402,43 +369,55 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 20,
-    marginTop: 14,
+    gap: 24,
   },
   dislikeButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: '#fff',
     borderWidth: 2,
     borderColor: '#E0E0E0',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   dislikeButtonIcon: {
-    fontSize: 26,
+    fontSize: 24,
     color: '#666',
   },
+  detailsButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  detailsButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#fff',
+  },
   likeButton: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: '#E991D9',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#E991D9',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+    elevation: 6,
   },
   likeButtonIcon: {
-    fontSize: 26,
+    fontSize: 24,
     color: '#fff',
   },
 });
