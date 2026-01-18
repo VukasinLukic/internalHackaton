@@ -53,3 +53,9 @@ coverage/
 
 # Misc
 *.log
+
+# Claude settings
+.claude/settings.local.json
+
+# Lock files
+package-lock.json
