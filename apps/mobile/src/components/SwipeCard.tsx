@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,8 +12,8 @@ import {
 import type { FeedItem, SwipeAction } from '../types';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
-const SWIPE_OUT_DURATION = 250;
+const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.25;
+const SWIPE_OUT_DURATION = 300;
 
 interface SwipeCardProps {
   item: FeedItem;
@@ -23,143 +23,85 @@ interface SwipeCardProps {
 }
 
 export function SwipeCard({ item, onSwipe, onPress, isFirst = true }: SwipeCardProps) {
-  const pan = useRef(new Animated.ValueXY()).current;
-  const scale = useRef(new Animated.Value(isFirst ? 1 : 0.92)).current;
-  const opacity = useRef(new Animated.Value(isFirst ? 1 : 0.6)).current;
+  const position = useRef(new Animated.ValueXY()).current;
+  const scale = useRef(new Animated.Value(isFirst ? 1 : 0.95)).current;
 
-  // Animate the next card when current card is swiped
-  const animateNextCard = () => {
-    Animated.parallel([
-      Animated.spring(scale, {
-        toValue: 1,
-        friction: 5,
-        tension: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start();
+  // Reset position when item changes
+  useEffect(() => {
+    position.setValue({ x: 0, y: 0 });
+    scale.setValue(isFirst ? 1 : 0.95);
+  }, [item.item.id, isFirst]);
+
+  const rotate = position.x.interpolate({
+    inputRange: [-SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2],
+    outputRange: ['-10deg', '0deg', '10deg'],
+    extrapolate: 'clamp',
+  });
+
+  const likeOpacity = position.x.interpolate({
+    inputRange: [0, SWIPE_THRESHOLD],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
+  const dislikeOpacity = position.x.interpolate({
+    inputRange: [-SWIPE_THRESHOLD, 0],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+
+  const resetPosition = () => {
+    Animated.spring(position, {
+      toValue: { x: 0, y: 0 },
+      useNativeDriver: true,
+      friction: 5,
+    }).start();
+  };
+
+  const swipeCard = (direction: 'left' | 'right') => {
+    const x = direction === 'right' ? SCREEN_WIDTH + 100 : -SCREEN_WIDTH - 100;
+    Animated.timing(position, {
+      toValue: { x, y: 0 },
+      duration: SWIPE_OUT_DURATION,
+      useNativeDriver: true,
+    }).start(() => {
+      onSwipe(direction === 'right' ? 'like' : 'dislike');
+      // Reset position for next card
+      position.setValue({ x: 0, y: 0 });
+    });
   };
 
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => isFirst,
       onMoveShouldSetPanResponder: (_, gesture) => {
-        return isFirst && (Math.abs(gesture.dx) > 5 || Math.abs(gesture.dy) > 5);
+        return isFirst && Math.abs(gesture.dx) > 5;
       },
-      onPanResponderGrant: () => {
-        // Slightly scale down on touch
-        Animated.spring(scale, {
-          toValue: 0.98,
-          friction: 10,
-          useNativeDriver: true,
-        }).start();
+      onPanResponderMove: (_, gesture) => {
+        position.setValue({ x: gesture.dx, y: gesture.dy * 0.3 });
       },
-      onPanResponderMove: (_, gestureState) => {
-        pan.setValue({ x: gestureState.dx, y: gestureState.dy * 0.3 });
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        // Restore scale
-        Animated.spring(scale, {
-          toValue: 1,
-          friction: 5,
-          useNativeDriver: true,
-        }).start();
-
-        if (gestureState.dx > SWIPE_THRESHOLD) {
-          // Swipe right - LIKE
-          swipeOut('right', 'like');
-        } else if (gestureState.dx < -SWIPE_THRESHOLD) {
-          // Swipe left - DISLIKE
-          swipeOut('left', 'dislike');
+      onPanResponderRelease: (_, gesture) => {
+        if (gesture.dx > SWIPE_THRESHOLD) {
+          swipeCard('right');
+        } else if (gesture.dx < -SWIPE_THRESHOLD) {
+          swipeCard('left');
         } else {
-          // Snap back with spring animation
-          Animated.spring(pan, {
-            toValue: { x: 0, y: 0 },
-            useNativeDriver: true,
-            friction: 5,
-            tension: 100,
-          }).start();
+          resetPosition();
         }
       },
     })
   ).current;
 
-  const swipeOut = (direction: 'left' | 'right', action: SwipeAction) => {
-    const x = direction === 'right' ? SCREEN_WIDTH * 1.5 : -SCREEN_WIDTH * 1.5;
-
-    Animated.parallel([
-      Animated.timing(pan, {
-        toValue: { x, y: pan.y._value },
-        duration: SWIPE_OUT_DURATION,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: SWIPE_OUT_DURATION,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      onSwipe(action);
-    });
-  };
-
-  // Programmatic swipe for button presses
-  const handleButtonSwipe = (action: SwipeAction) => {
-    if (action === 'like') {
-      swipeOut('right', 'like');
-    } else if (action === 'dislike') {
-      swipeOut('left', 'dislike');
-    }
-  };
-
-  const rotate = pan.x.interpolate({
-    inputRange: [-SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 2],
-    outputRange: ['-12deg', '0deg', '12deg'],
-    extrapolate: 'clamp',
-  });
-
-  const likeOpacity = pan.x.interpolate({
-    inputRange: [0, SWIPE_THRESHOLD / 2, SWIPE_THRESHOLD],
-    outputRange: [0, 0.5, 1],
-    extrapolate: 'clamp',
-  });
-
-  const dislikeOpacity = pan.x.interpolate({
-    inputRange: [-SWIPE_THRESHOLD, -SWIPE_THRESHOLD / 2, 0],
-    outputRange: [1, 0.5, 0],
-    extrapolate: 'clamp',
-  });
-
-  // Scale up like/dislike icons when swiping
-  const likeScale = pan.x.interpolate({
-    inputRange: [0, SWIPE_THRESHOLD],
-    outputRange: [0.5, 1.2],
-    extrapolate: 'clamp',
-  });
-
-  const dislikeScale = pan.x.interpolate({
-    inputRange: [-SWIPE_THRESHOLD, 0],
-    outputRange: [1.2, 0.5],
-    extrapolate: 'clamp',
-  });
-
   const cardStyle = {
     transform: [
-      { translateX: pan.x },
-      { translateY: pan.y },
+      { translateX: position.x },
+      { translateY: position.y },
       { rotate },
       { scale },
     ],
-    opacity,
   };
 
   const { item: apartment, provider, score } = item;
-
-  // Get the first AI vibe for display
   const primaryVibe = apartment.attributes?.[0]?.name || 'Cozy';
 
   return (
@@ -189,52 +131,32 @@ export function SwipeCard({ item, onSwipe, onPress, isFirst = true }: SwipeCardP
             </View>
           )}
 
-          {/* Like Overlay with Animation */}
-          <Animated.View
-            style={[
-              styles.overlay,
-              styles.likeOverlay,
-              { opacity: likeOpacity }
-            ]}
-          >
-            <Animated.View style={{ transform: [{ scale: likeScale }] }}>
-              <View style={styles.overlayBadge}>
-                <Text style={styles.overlayBadgeText}>SVIĐA MI SE</Text>
-                <Text style={styles.overlayIcon}>♥</Text>
-              </View>
-            </Animated.View>
+          {/* Like Overlay */}
+          <Animated.View style={[styles.overlay, styles.likeOverlay, { opacity: likeOpacity }]}>
+            <View style={styles.overlayBadge}>
+              <Text style={styles.overlayBadgeText}>SVIĐA MI SE ♥</Text>
+            </View>
           </Animated.View>
 
-          {/* Dislike Overlay with Animation */}
-          <Animated.View
-            style={[
-              styles.overlay,
-              styles.dislikeOverlay,
-              { opacity: dislikeOpacity }
-            ]}
-          >
-            <Animated.View style={{ transform: [{ scale: dislikeScale }] }}>
-              <View style={[styles.overlayBadge, styles.overlayBadgeDislike]}>
-                <Text style={[styles.overlayBadgeText, styles.overlayBadgeTextDislike]}>NE</Text>
-                <Text style={[styles.overlayIcon, styles.overlayIconDislike]}>✕</Text>
-              </View>
-            </Animated.View>
+          {/* Dislike Overlay */}
+          <Animated.View style={[styles.overlay, styles.dislikeOverlay, { opacity: dislikeOpacity }]}>
+            <View style={[styles.overlayBadge, styles.overlayBadgeDislike]}>
+              <Text style={styles.overlayBadgeText}>NE ✕</Text>
+            </View>
           </Animated.View>
 
-          {/* Match Score Badge - Green */}
+          {/* Match Score Badge */}
           <View style={styles.scoreBadge}>
             <Text style={styles.scoreText}>{score.total}% Match!</Text>
           </View>
 
-          {/* Provider Avatar - Bottom Left */}
+          {/* Provider Avatar - Positioned at top of info section */}
           <View style={styles.providerAvatarContainer}>
             {provider.images && provider.images.length > 0 ? (
               <Image source={{ uri: provider.images[0] }} style={styles.providerAvatar} />
             ) : (
               <View style={[styles.providerAvatar, styles.providerAvatarPlaceholder]}>
-                <Text style={styles.providerAvatarText}>
-                  {provider.name.charAt(0)}
-                </Text>
+                <Text style={styles.providerAvatarText}>{provider.name.charAt(0)}</Text>
               </View>
             )}
           </View>
@@ -248,10 +170,20 @@ export function SwipeCard({ item, onSwipe, onPress, isFirst = true }: SwipeCardP
           {/* Location */}
           <View style={styles.locationRow}>
             <Text style={styles.locationIcon}>📍</Text>
-            <Text style={styles.location}>
-              {apartment.location.address ? `${apartment.location.address}, ` : ''}
-              {apartment.location.city}
-            </Text>
+            <Text style={styles.location}>{apartment.location.city}</Text>
+          </View>
+
+          {/* Apartment Details Badges */}
+          <View style={styles.detailsRow}>
+            <View style={styles.detailBadge}>
+              <Text style={styles.detailText}>{apartment.size}m²</Text>
+            </View>
+            <View style={styles.detailBadge}>
+              <Text style={styles.detailText}>{apartment.bedrooms} sobe</Text>
+            </View>
+            <View style={styles.detailBadge}>
+              <Text style={styles.detailText}>{apartment.bathrooms} kupatilo</Text>
+            </View>
           </View>
 
           {/* AI Insight Banner */}
@@ -266,17 +198,11 @@ export function SwipeCard({ item, onSwipe, onPress, isFirst = true }: SwipeCardP
 
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
-            <Pressable
-              style={styles.dislikeButton}
-              onPress={() => handleButtonSwipe('dislike')}
-            >
+            <Pressable style={styles.dislikeButton} onPress={() => swipeCard('left')}>
               <Text style={styles.dislikeButtonIcon}>✕</Text>
             </Pressable>
 
-            <Pressable
-              style={styles.likeButton}
-              onPress={() => handleButtonSwipe('like')}
-            >
+            <Pressable style={styles.likeButton} onPress={() => swipeCard('right')}>
               <Text style={styles.likeButtonIcon}>♥</Text>
             </Pressable>
           </View>
@@ -307,10 +233,10 @@ const styles = StyleSheet.create({
   logo: {
     width: 120,
     height: 32,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   imageContainer: {
-    height: '50%',
+    height: '45%',
     position: 'relative',
     borderRadius: 16,
     overflow: 'hidden',
@@ -326,7 +252,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   imagePlaceholderText: {
-    fontSize: 80,
+    fontSize: 60,
   },
   overlay: {
     position: 'absolute',
@@ -338,36 +264,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   likeOverlay: {
-    backgroundColor: 'rgba(34, 197, 94, 0.3)',
+    backgroundColor: 'rgba(34, 197, 94, 0.4)',
   },
   dislikeOverlay: {
-    backgroundColor: 'rgba(239, 68, 68, 0.3)',
+    backgroundColor: 'rgba(239, 68, 68, 0.4)',
   },
   overlayBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: '#22C55E',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 30,
-    gap: 8,
   },
   overlayBadgeDislike: {
     backgroundColor: '#EF4444',
   },
   overlayBadgeText: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: 'bold',
-    color: '#fff',
-  },
-  overlayBadgeTextDislike: {
-    color: '#fff',
-  },
-  overlayIcon: {
-    fontSize: 28,
-    color: '#fff',
-  },
-  overlayIconDislike: {
     color: '#fff',
   },
   scoreBadge: {
@@ -386,7 +299,7 @@ const styles = StyleSheet.create({
   },
   providerAvatarContainer: {
     position: 'absolute',
-    bottom: -24,
+    bottom: -28,
     left: 16,
     width: 56,
     height: 56,
@@ -395,11 +308,15 @@ const styles = StyleSheet.create({
     borderColor: '#fff',
     overflow: 'hidden',
     backgroundColor: '#fff',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   providerAvatar: {
     width: '100%',
     height: '100%',
-    borderRadius: 25,
   },
   providerAvatarPlaceholder: {
     backgroundColor: '#E991D9',
@@ -413,70 +330,85 @@ const styles = StyleSheet.create({
   },
   infoContainer: {
     flex: 1,
-    paddingTop: 32,
+    paddingTop: 36,
     paddingHorizontal: 4,
   },
   price: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: 'bold',
     color: '#1a1a1a',
   },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 4,
+    marginTop: 2,
   },
   locationIcon: {
-    fontSize: 16,
+    fontSize: 14,
     marginRight: 4,
   },
   location: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#666',
+  },
+  detailsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 10,
+  },
+  detailBadge: {
+    backgroundColor: '#F5F5F5',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  detailText: {
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '500',
   },
   aiInsightBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#1a1a1a',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 16,
-    marginTop: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 14,
+    marginTop: 12,
   },
   aiInsightIconWrapper: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 22,
+    height: 22,
+    borderRadius: 11,
     backgroundColor: '#E991D9',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
   },
   aiInsightIcon: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#fff',
   },
   aiInsightText: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 13,
     color: '#fff',
-    lineHeight: 20,
+    lineHeight: 18,
   },
   aiInsightHighlight: {
     fontWeight: 'bold',
-    color: '#fff',
   },
   actionButtons: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 24,
-    marginTop: 20,
+    gap: 20,
+    marginTop: 14,
   },
   dislikeButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: '#fff',
     borderWidth: 2,
     borderColor: '#E0E0E0',
@@ -485,18 +417,17 @@ const styles = StyleSheet.create({
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
-    shadowRadius: 8,
+    shadowRadius: 6,
     elevation: 3,
   },
   dislikeButtonIcon: {
-    fontSize: 28,
-    color: '#1a1a1a',
-    fontWeight: '300',
+    fontSize: 26,
+    color: '#666',
   },
   likeButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: '#E991D9',
     justifyContent: 'center',
     alignItems: 'center',
@@ -507,7 +438,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   likeButtonIcon: {
-    fontSize: 28,
+    fontSize: 26,
     color: '#fff',
   },
 });

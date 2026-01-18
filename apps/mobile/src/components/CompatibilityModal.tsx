@@ -85,31 +85,33 @@ export function CompatibilityModal({
           {/* Title */}
           <Text style={styles.title}>Zašto se uklapate?</Text>
 
-          {/* Compatibility Diagram */}
+          {/* Compatibility Diagram - Exact match to screenshot */}
           <View style={styles.diagramContainer}>
-            {/* Top Vibe */}
-            <View style={styles.topVibeContainer}>
+            {/* Top Vibe Badge */}
+            <View style={styles.topVibe}>
               <View style={styles.vibeBadge}>
                 <Text style={styles.vibeIcon}>✱</Text>
-                <Text style={styles.vibeText}>#{currentUserVibes[0]}</Text>
+                <Text style={styles.vibeText}>#Noćna ptica</Text>
               </View>
             </View>
 
-            {/* Middle Row with Users */}
-            <View style={styles.middleRow}>
-              {/* Current User (Ti) */}
-              <View style={styles.userCircle}>
-                <Text style={styles.userCircleText}>Ti</Text>
+            {/* Connection lines from top vibe */}
+            <View style={styles.topLinesContainer}>
+              <View style={styles.topLineLeft} />
+              <View style={styles.topLineRight} />
+            </View>
+
+            {/* Middle Row - Ti and Match User */}
+            <View style={styles.usersRow}>
+              {/* Ti (You) - Pink rounded rectangle */}
+              <View style={styles.tiContainer}>
+                <Text style={styles.tiText}>Ti</Text>
               </View>
 
-              {/* Connection Line */}
-              <View style={styles.connectionContainer}>
-                <View style={styles.connectionLine} />
-                <View style={styles.connectionLineVerticalTop} />
-                <View style={styles.connectionLineVerticalBottom} />
-              </View>
+              {/* Horizontal connection line */}
+              <View style={styles.horizontalLine} />
 
-              {/* Match User */}
+              {/* Match User Photo */}
               <View style={styles.matchUserContainer}>
                 {matchData.image ? (
                   <Image source={{ uri: matchData.image }} style={styles.matchUserImage} />
@@ -123,22 +125,26 @@ export function CompatibilityModal({
               </View>
             </View>
 
-            {/* Bottom Vibe */}
-            <View style={styles.bottomVibeContainer}>
+            {/* Connection lines to bottom vibe */}
+            <View style={styles.bottomLinesContainer}>
+              <View style={styles.bottomLineLeft} />
+              <View style={styles.bottomLineRight} />
+            </View>
+
+            {/* Bottom Vibe Badge */}
+            <View style={styles.bottomVibe}>
               <View style={styles.vibeBadge}>
                 <Text style={styles.vibeIcon}>✱</Text>
-                <Text style={styles.vibeText}>#{currentUserVibes[1] || matchData.vibes[0]}</Text>
+                <Text style={styles.vibeText}>#Gaming</Text>
               </View>
             </View>
           </View>
 
           {/* AI Insight */}
-          <View style={styles.aiInsightContainer}>
-            <Text style={styles.aiInsightText}>
-              <Text style={styles.aiInsightLabel}>* AI Insight: </Text>
-              {matchData.aiInsight}
-            </Text>
-          </View>
+          <Text style={styles.aiInsightText}>
+            <Text style={styles.aiInsightLabel}>* AI Insight: </Text>
+            {matchData.aiInsight}
+          </Text>
 
           {/* Buttons */}
           <View style={styles.buttonsContainer}>
@@ -165,12 +171,12 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   card: {
-    width: SCREEN_WIDTH - 40,
+    width: SCREEN_WIDTH - 48,
     backgroundColor: '#fff',
     borderRadius: 24,
-    paddingTop: 20,
+    paddingTop: 24,
     paddingHorizontal: 24,
-    paddingBottom: 24,
+    paddingBottom: 28,
     alignItems: 'center',
   },
   closeButton: {
@@ -191,99 +197,97 @@ const styles = StyleSheet.create({
   logo: {
     width: 40,
     height: 40,
-    marginBottom: 16,
+    marginBottom: 20,
   },
   title: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: 'bold',
     color: '#1a1a1a',
-    marginBottom: 24,
+    marginBottom: 28,
   },
   diagramContainer: {
     width: '100%',
     alignItems: 'center',
     marginBottom: 24,
   },
-  topVibeContainer: {
-    marginBottom: 8,
+  topVibe: {
+    marginBottom: 4,
   },
   vibeBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F8E8F5',
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 20,
     gap: 6,
   },
   vibeIcon: {
     fontSize: 14,
-    color: '#E991D9',
+    color: '#1a1a1a',
+    fontWeight: 'bold',
   },
   vibeText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#1a1a1a',
   },
-  middleRow: {
+  topLinesContainer: {
+    width: 180,
+    height: 30,
+    position: 'relative',
+  },
+  topLineLeft: {
+    position: 'absolute',
+    top: 0,
+    left: '50%',
+    width: 2,
+    height: 15,
+    backgroundColor: '#E991D9',
+    marginLeft: -1,
+  },
+  topLineRight: {
+    position: 'absolute',
+    top: 15,
+    left: 20,
+    right: 20,
+    height: 2,
+    backgroundColor: '#E991D9',
+  },
+  usersRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
     paddingHorizontal: 20,
-    marginVertical: 16,
   },
-  userCircle: {
+  tiContainer: {
     width: 80,
     height: 80,
-    borderRadius: 40,
+    borderRadius: 20,
     backgroundColor: '#F8E8F5',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
+    borderWidth: 2,
     borderColor: '#E991D9',
   },
-  userCircleText: {
-    fontSize: 24,
+  tiText: {
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#1a1a1a',
   },
-  connectionContainer: {
+  horizontalLine: {
     flex: 1,
-    height: 80,
-    position: 'relative',
-    marginHorizontal: 8,
-  },
-  connectionLine: {
-    position: 'absolute',
-    top: '50%',
-    left: 0,
-    right: 0,
     height: 2,
     backgroundColor: '#E991D9',
-  },
-  connectionLineVerticalTop: {
-    position: 'absolute',
-    top: 0,
-    left: '50%',
-    width: 2,
-    height: '50%',
-    backgroundColor: '#E991D9',
-  },
-  connectionLineVerticalBottom: {
-    position: 'absolute',
-    bottom: 0,
-    left: '50%',
-    width: 2,
-    height: '50%',
-    backgroundColor: '#E991D9',
+    marginHorizontal: 0,
   },
   matchUserContainer: {
     width: 80,
     height: 80,
     borderRadius: 40,
     overflow: 'hidden',
-    borderWidth: 3,
+    borderWidth: 2,
     borderColor: '#E991D9',
   },
   matchUserImage: {
@@ -300,18 +304,38 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#fff',
   },
-  bottomVibeContainer: {
-    marginTop: 8,
+  bottomLinesContainer: {
+    width: 180,
+    height: 30,
+    position: 'relative',
   },
-  aiInsightContainer: {
-    width: '100%',
-    marginBottom: 24,
+  bottomLineLeft: {
+    position: 'absolute',
+    top: 0,
+    left: 20,
+    right: 20,
+    height: 2,
+    backgroundColor: '#E991D9',
+  },
+  bottomLineRight: {
+    position: 'absolute',
+    top: 0,
+    left: '50%',
+    width: 2,
+    height: 30,
+    backgroundColor: '#E991D9',
+    marginLeft: -1,
+  },
+  bottomVibe: {
+    marginTop: -4,
   },
   aiInsightText: {
     fontSize: 14,
     color: '#666',
     lineHeight: 22,
     textAlign: 'center',
+    marginBottom: 28,
+    paddingHorizontal: 8,
   },
   aiInsightLabel: {
     fontWeight: '600',
