@@ -1,19 +1,26 @@
 import { Tabs } from 'expo-router';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useAuthStore } from '../../src/stores/authStore';
 
 // Custom tab bar icon component
 function TabIcon({ name, focused }: { name: string; focused: boolean }) {
-  const icons: Record<string, { active: string; inactive: string }> = {
-    feed: { active: '🏠', inactive: '🏠' },
-    matches: { active: '📥', inactive: '📥' },
-    profile: { active: '👤', inactive: '👤' },
+  const getIcon = () => {
+    switch (name) {
+      case 'feed':
+        return '🏠';
+      case 'matches':
+        return '💌';
+      case 'profile':
+        return '👤';
+      default:
+        return '📱';
+    }
   };
 
   return (
-    <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
+    <View style={styles.iconContainer}>
       <Text style={[styles.icon, focused && styles.iconActive]}>
-        {focused ? icons[name]?.active : icons[name]?.inactive}
+        {getIcon()}
       </Text>
     </View>
   );
@@ -44,20 +51,20 @@ export default function TabLayout() {
       <Tabs.Screen
         name="matches"
         options={{
-          title: 'Inbox',
+          title: isProvider ? 'Zahtevi' : 'Inbox',
           tabBarIcon: ({ focused }) => <TabIcon name="matches" focused={focused} />,
         }}
       />
       <Tabs.Screen
         name="messages"
         options={{
-          href: null, // Hide this tab, we'll merge it with matches
+          href: null, // Hide this tab
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: 'Profil',
           tabBarIcon: ({ focused }) => <TabIcon name="profile" focused={focused} />,
         }}
       />
@@ -69,32 +76,28 @@ const styles = StyleSheet.create({
   tabBar: {
     backgroundColor: '#fff',
     borderTopWidth: 0,
-    height: 70,
-    paddingBottom: 16,
-    paddingTop: 12,
+    height: 75,
+    paddingBottom: 20,
+    paddingTop: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 10,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 15,
   },
   tabBarLabel: {
     fontSize: 12,
     fontWeight: '500',
-    marginTop: 4,
   },
   iconContainer: {
     width: 40,
-    height: 28,
+    height: 30,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  iconContainerActive: {
-    // Active state styling
-  },
   icon: {
-    fontSize: 22,
-    opacity: 0.6,
+    fontSize: 24,
+    opacity: 0.5,
   },
   iconActive: {
     opacity: 1,

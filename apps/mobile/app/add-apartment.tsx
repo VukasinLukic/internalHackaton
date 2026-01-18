@@ -1,110 +1,123 @@
-import { View, Text, StyleSheet, Pressable, ScrollView, Image, TextInput, Alert } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Image, TextInput, Alert, Dimensions } from 'react-native';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// Fake AI vibes that will be "detected" from the image
+const FAKE_AI_VIBES = ['Svetlo', 'Moderno', 'Biljke', 'Prostrano', 'Minimalist'];
+
 export default function AddApartmentScreen() {
-  const [images, setImages] = useState<string[]>([]);
-  const [price, setPrice] = useState('');
-  const [address, setAddress] = useState('');
-  const [city, setCity] = useState('Beograd');
-  const [size, setSize] = useState('');
-  const [bedrooms, setBedrooms] = useState('1');
-  const [description, setDescription] = useState('');
+  const [image, setImage] = useState<string | null>(null);
+  const [price, setPrice] = useState('400');
+  const [size, setSize] = useState('55');
+  const [showVibes, setShowVibes] = useState(false);
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: true,
+      allowsEditing: true,
+      aspect: [4, 3],
       quality: 0.8,
-      selectionLimit: 5,
     });
 
     if (!result.canceled && result.assets) {
-      const newImages = result.assets.map(asset => asset.uri);
-      setImages(prev => [...prev, ...newImages].slice(0, 5));
+      setImage(result.assets[0].uri);
+      // Simulate AI analysis delay
+      setTimeout(() => {
+        setShowVibes(true);
+      }, 500);
     }
-  };
-
-  const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = () => {
-    if (images.length === 0) {
-      Alert.alert('Greška', 'Dodaj bar jednu sliku stana');
+    if (!image) {
+      Alert.alert('Greška', 'Dodaj sliku stana');
       return;
     }
-    if (!price || !address) {
-      Alert.alert('Greška', 'Popuni sva obavezna polja');
+    if (!price) {
+      Alert.alert('Greška', 'Unesi mesečnu kiriju');
       return;
     }
 
-    // Demo - just show success and go back
     Alert.alert(
       'Uspešno!',
-      'Tvoj stan je dodat i sada je vidljiv ostalim korisnicima.',
+      'Tvoj stan je objavljen i sada je vidljiv tražiocima.',
       [{ text: 'OK', onPress: () => router.back() }]
     );
   };
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backButtonText}>←</Text>
-        </Pressable>
-        <Text style={styles.headerTitle}>Dodaj Stan</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Modal Card */}
+        <View style={styles.card}>
+          {/* Close Button */}
+          <Pressable style={styles.closeButton} onPress={() => router.back()}>
+            <Text style={styles.closeButtonText}>×</Text>
+          </Pressable>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Image Upload Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Slike stana</Text>
-          <Text style={styles.sectionSubtitle}>Dodaj do 5 slika</Text>
+          {/* Logo */}
+          <Image
+            source={require('../assets/mali logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
 
-          <View style={styles.imagesGrid}>
-            {/* Uploaded Images */}
-            {images.map((uri, index) => (
-              <View key={index} style={styles.imageContainer}>
-                <Image source={{ uri }} style={styles.uploadedImage} />
-                <Pressable
-                  style={styles.removeImageButton}
-                  onPress={() => removeImage(index)}
-                >
-                  <Text style={styles.removeImageText}>×</Text>
-                </Pressable>
-                {index === 0 && (
-                  <View style={styles.mainImageBadge}>
-                    <Text style={styles.mainImageText}>Glavna</Text>
-                  </View>
-                )}
-              </View>
-            ))}
+          {/* Title */}
+          <Text style={styles.title}>Dodaj svoj stan</Text>
 
-            {/* Add Image Button */}
-            {images.length < 5 && (
-              <Pressable style={styles.addImageButton} onPress={pickImage}>
-                <View style={styles.addImageIcon}>
-                  <Text style={styles.addImageIconText}>+</Text>
+          {/* Image Upload Section */}
+          <Pressable style={styles.imageUploadContainer} onPress={pickImage}>
+            {image ? (
+              <Image source={{ uri: image }} style={styles.uploadedImage} />
+            ) : (
+              <View style={styles.imagePlaceholder}>
+                <View style={styles.uploadIconWrapper}>
+                  <Text style={styles.uploadIcon}>📷</Text>
                 </View>
-                <Text style={styles.addImageText}>Dodaj sliku</Text>
-              </Pressable>
+                <Text style={styles.uploadText}>Dodaj sliku stana</Text>
+              </View>
             )}
-          </View>
-        </View>
+          </Pressable>
 
-        {/* Basic Info Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Osnovne informacije</Text>
+          {/* AI Vibes Section - shows after image upload */}
+          {showVibes && (
+            <View style={styles.aiSection}>
+              <Text style={styles.aiLabel}>AI je prepoznao:</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.vibesScrollView}
+                contentContainerStyle={styles.vibesContainer}
+              >
+                {FAKE_AI_VIBES.map((vibe, index) => (
+                  <View key={index} style={styles.vibeBadge}>
+                    <Text style={styles.vibeIcon}>✱</Text>
+                    <Text style={styles.vibeText}>#{vibe}</Text>
+                  </View>
+                ))}
+              </ScrollView>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Cena (€/mesec) *</Text>
+              {/* AI Insight */}
+              <Text style={styles.aiInsight}>
+                <Text style={styles.aiInsightLabel}>* AI Insight: </Text>
+                Ovaj stan će privući ljude koji vole mir i prirodu.
+              </Text>
+            </View>
+          )}
+
+          {/* Price Input */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Mesečna kirija (€)</Text>
             <TextInput
               style={styles.input}
-              placeholder="npr. 450"
+              placeholder="400"
               placeholderTextColor="#999"
               keyboardType="numeric"
               value={price}
@@ -112,104 +125,24 @@ export default function AddApartmentScreen() {
             />
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Adresa *</Text>
+          {/* Size Input */}
+          <View style={styles.inputContainer}>
+            <Text style={styles.inputLabel}>Kvadratura (m²)</Text>
             <TextInput
               style={styles.input}
-              placeholder="npr. Kralja Milana 25"
+              placeholder="55"
               placeholderTextColor="#999"
-              value={address}
-              onChangeText={setAddress}
+              keyboardType="numeric"
+              value={size}
+              onChangeText={setSize}
             />
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Grad</Text>
-            <View style={styles.citySelector}>
-              {['Beograd', 'Novi Sad', 'Niš'].map((c) => (
-                <Pressable
-                  key={c}
-                  style={[styles.cityOption, city === c && styles.cityOptionActive]}
-                  onPress={() => setCity(c)}
-                >
-                  <Text style={[styles.cityOptionText, city === c && styles.cityOptionTextActive]}>
-                    {c}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </View>
-
-          <View style={styles.rowInputs}>
-            <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
-              <Text style={styles.inputLabel}>Površina (m²)</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="npr. 55"
-                placeholderTextColor="#999"
-                keyboardType="numeric"
-                value={size}
-                onChangeText={setSize}
-              />
-            </View>
-
-            <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
-              <Text style={styles.inputLabel}>Sobe</Text>
-              <View style={styles.roomSelector}>
-                {['1', '2', '3', '4+'].map((r) => (
-                  <Pressable
-                    key={r}
-                    style={[styles.roomOption, bedrooms === r && styles.roomOptionActive]}
-                    onPress={() => setBedrooms(r)}
-                  >
-                    <Text style={[styles.roomOptionText, bedrooms === r && styles.roomOptionTextActive]}>
-                      {r}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Opis</Text>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Opiši svoj stan - šta ga čini posebnim?"
-              placeholderTextColor="#999"
-              multiline
-              numberOfLines={4}
-              value={description}
-              onChangeText={setDescription}
-              textAlignVertical="top"
-            />
-          </View>
-        </View>
-
-        {/* AI Analysis Preview */}
-        <View style={styles.section}>
-          <View style={styles.aiPreviewCard}>
-            <View style={styles.aiPreviewHeader}>
-              <View style={styles.aiIconWrapper}>
-                <Text style={styles.aiIcon}>✱</Text>
-              </View>
-              <Text style={styles.aiPreviewTitle}>AI Analiza</Text>
-            </View>
-            <Text style={styles.aiPreviewText}>
-              Nakon što dodaš slike, AI će automatski analizirati tvoj stan i dodeliti mu vajbove poput "Svetao", "Moderan", "Udoban" itd.
-            </Text>
-          </View>
-        </View>
-
-        {/* Submit Button */}
-        <View style={styles.submitSection}>
+          {/* Submit Button */}
           <Pressable style={styles.submitButton} onPress={handleSubmit}>
-            <Text style={styles.submitButtonText}>Objavi Stan</Text>
+            <Text style={styles.submitButtonText}>Objavi oglas</Text>
           </Pressable>
         </View>
-
-        {/* Bottom spacing */}
-        <View style={{ height: 40 }} />
       </ScrollView>
     </View>
   );
@@ -218,242 +151,167 @@ export default function AddApartmentScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 50,
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  backButtonText: {
-    fontSize: 24,
-    color: '#1a1a1a',
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1a1a1a',
-  },
-  headerSpacer: {
-    width: 40,
-  },
-  content: {
+  scrollView: {
     flex: 1,
   },
-  section: {
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
     padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    paddingTop: 60,
+    paddingBottom: 40,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginBottom: 4,
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    padding: 24,
+    alignItems: 'center',
   },
-  sectionSubtitle: {
-    fontSize: 14,
-    color: '#666',
+  closeButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  closeButtonText: {
+    fontSize: 32,
+    color: '#999',
+    fontWeight: '300',
+  },
+  logo: {
+    width: 48,
+    height: 48,
     marginBottom: 16,
   },
-  imagesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
+  title: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: '#1a1a1a',
+    marginBottom: 24,
+    textAlign: 'center',
   },
-  imageContainer: {
-    position: 'relative',
-    width: 100,
-    height: 100,
-    borderRadius: 16,
+  imageUploadContainer: {
+    width: SCREEN_WIDTH - 88,
+    height: 200,
+    borderRadius: 20,
     overflow: 'hidden',
+    marginBottom: 20,
   },
   uploadedImage: {
     width: '100%',
     height: '100%',
   },
-  removeImageButton: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+  imagePlaceholder: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  removeImageText: {
-    fontSize: 16,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  mainImageBadge: {
-    position: 'absolute',
-    bottom: 4,
-    left: 4,
-    backgroundColor: '#E991D9',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  mainImageText: {
-    fontSize: 10,
-    color: '#fff',
-    fontWeight: '600',
-  },
-  addImageButton: {
-    width: 100,
-    height: 100,
-    borderRadius: 16,
-    backgroundColor: '#F8F8F8',
     borderWidth: 2,
     borderColor: '#E0E0E0',
     borderStyle: 'dashed',
+    borderRadius: 20,
+  },
+  uploadIconWrapper: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#F8E8F5',
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 12,
   },
-  addImageIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#E991D9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 4,
+  uploadIcon: {
+    fontSize: 24,
   },
-  addImageIconText: {
-    fontSize: 20,
-    color: '#fff',
-    fontWeight: '300',
-  },
-  addImageText: {
-    fontSize: 11,
+  uploadText: {
+    fontSize: 15,
     color: '#666',
+    fontWeight: '500',
   },
-  inputGroup: {
+  aiSection: {
+    width: '100%',
+    marginBottom: 20,
+  },
+  aiLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 12,
+  },
+  vibesScrollView: {
+    marginHorizontal: -24,
+    paddingHorizontal: 24,
+  },
+  vibesContainer: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingRight: 24,
+  },
+  vibeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8E8F5',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    gap: 6,
+  },
+  vibeIcon: {
+    fontSize: 12,
+    color: '#E991D9',
+  },
+  vibeText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1a1a1a',
+  },
+  aiInsight: {
+    fontSize: 13,
+    color: '#666',
+    lineHeight: 20,
+    marginTop: 16,
+  },
+  aiInsightLabel: {
+    fontWeight: '600',
+    color: '#1a1a1a',
+  },
+  inputContainer: {
+    width: '100%',
     marginBottom: 16,
   },
   inputLabel: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#1a1a1a',
+    color: '#666',
     marginBottom: 8,
+    marginLeft: 4,
   },
   input: {
-    backgroundColor: '#F8F8F8',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: '#1a1a1a',
-  },
-  textArea: {
-    height: 100,
-    paddingTop: 14,
-  },
-  citySelector: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  cityOption: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 20,
-    backgroundColor: '#F8F8F8',
-  },
-  cityOptionActive: {
-    backgroundColor: '#E991D9',
-  },
-  cityOptionText: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
-  },
-  cityOptionTextActive: {
-    color: '#fff',
-  },
-  rowInputs: {
-    flexDirection: 'row',
-  },
-  roomSelector: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  roomOption: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 12,
-    backgroundColor: '#F8F8F8',
-    alignItems: 'center',
-  },
-  roomOptionActive: {
-    backgroundColor: '#E991D9',
-  },
-  roomOptionText: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '600',
-  },
-  roomOptionTextActive: {
-    color: '#fff',
-  },
-  aiPreviewCard: {
-    backgroundColor: '#FFF9E6',
+    width: '100%',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
     borderRadius: 16,
-    padding: 16,
-  },
-  aiPreviewHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  aiIconWrapper: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#E991D9',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 8,
-  },
-  aiIcon: {
-    fontSize: 12,
-    color: '#fff',
-  },
-  aiPreviewTitle: {
-    fontSize: 14,
-    fontWeight: '600',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    fontSize: 18,
     color: '#1a1a1a',
-  },
-  aiPreviewText: {
-    fontSize: 13,
-    color: '#666',
-    lineHeight: 20,
-  },
-  submitSection: {
-    padding: 20,
   },
   submitButton: {
+    width: '100%',
     backgroundColor: '#E991D9',
     paddingVertical: 18,
     borderRadius: 30,
     alignItems: 'center',
+    marginTop: 8,
   },
   submitButtonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '600',
   },
 });
